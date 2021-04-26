@@ -21,6 +21,12 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: Install SSH key
+      uses: shimataro/ssh-key-action@v2
+      with:
+        key: ${{ secrets.SSH_KEY }}
+        known_hosts: ${{ secrets.KNOWN_HOSTS }}
+
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v1
       with:
@@ -46,3 +52,7 @@ jobs:
     
     - name: Build production website
       run: npm run build
+
+    - name: Deploy to wt.szp.io
+      if: ${{ matrix.os == 'ubuntu-latest' && matrix.node-version == '14.x' }}
+      run: rsync -avz --delete public/ sun@tillycode.com:/srv/http/tillycode/
