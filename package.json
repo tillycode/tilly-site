@@ -36,6 +36,9 @@
     "check": "hugo version",
     "copy:katex-fonts": "shx cp ./node_modules/katex/dist/fonts/* ./static/fonts/"
   },
+  "pre-commit": [
+    "lint"
+  ],
   "devDependencies": {
     "@babel/cli": "^7.13",
     "@babel/core": "^7.13",
@@ -62,5 +65,8 @@
     "standard-version": "^9.2",
     "stylelint": "^13.12",
     "stylelint-config-standard": "^21.0"
+  },
+  "dependencies": {
+    "pre-commit": "^1.2.2"
   }
 }
