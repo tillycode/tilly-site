@@ -1,0 +1,22 @@
+digraph {
+  subgraph {
+    node[style=rounded,shape=box]
+    Entry
+    Exit
+  }
+  subgraph {
+    graph[rank=same]
+    Entry 1
+  }
+  subgraph {
+    graph[rank=same]
+    Exit 12
+  }
+  Entry -> 1 -> 2 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12
+  2 -> 3 -> 4 -> 6 -> 8
+  3 -> 5 -> 6
+  11 -> 9
+  12 -> 2
+  Exit -> 12 [dir=back]
+  Entry -> Exit [constraint=false]
+}

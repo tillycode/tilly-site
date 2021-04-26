@@ -1,0 +1,13 @@
+digraph {
+    node[shape=rect]
+    entry->idom_v    
+    idom_v->X->idom_u->b->u->w->v[color=red]
+    idom_v->v
+    idom_v->a->idom_u
+    idom_u->c->u
+    idom_v[label="idom(v)"]
+    idom_u[label="idom(u)"]
+    a[fontcolor=gray]
+    b[fontcolor=gray]
+    c[fontcolor=gray]
+}

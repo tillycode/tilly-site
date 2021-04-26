@@ -1,0 +1,17 @@
+digraph {
+    node[shape=rect]
+    6[label="6\n"]
+    7[label="7\nR: Λ"]
+    8[label="8\n"]
+    9[label="9\nR: γ(Q,Λ,∅)"]
+    10[label="10\nR: γ(Q,∅,Λ)"]
+    11[label="11\nR: γ(T,Λ,∅)"]
+    12[label="12\nR: γ(T,∅,Λ)"]
+    13[label="13\nR: Λ",color="red"]
+    6->7
+    8->9
+    8->10
+    10->11
+    10->12
+    10->13
+}

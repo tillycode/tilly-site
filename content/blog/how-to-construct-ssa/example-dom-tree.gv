@@ -1,0 +1,23 @@
+digraph {
+  Entry[label="Entry[-|-]"]
+  Exit[label="(-)\n|Exit[-|-]"]
+  1[label="(-)\n1[-|Exit]"]
+  2[label="(Exit)\n2[-|Exit,2]"]
+  3[label="(-)\n3[-|8]"]
+  4[label="(-)\n4[6|6]"]
+  5[label="(-)\n5[6|6]"]
+  6[label="(8)\n6[8|8]"]
+  7[label="(-)\n7[8|8]"]
+  8[label="(Exit,2)\n8[-|Exit,2]"]
+  9[label="(Exit,2)\n9[-|Exit,2,9]"]
+  10[label="(-)\n10[11|11]"]
+  11[label="(Exit,2,9)\n11[9|Exit,2,9]"]
+  12[label="(Exit,2)\n12[Exit,2|Exit,2]"]
+  Entry -> 1 -> 2 -> 3 -> 4
+  3 -> 5
+  3 -> 6
+  2 -> 7
+  2 -> 8 -> 9 -> 10
+  9 -> 11 -> 12
+  Entry -> Exit
+}

@@ -1,5 +1,13 @@
-table {
+table:not(.lntable) {
   @extend .table;
 
   margin: 3rem 0;
+}
+
+table.lntable {
+  display: block;
+
+  td:nth-child(2) {
+    width: 100%;
+  }
 }

@@ -1,0 +1,39 @@
+digraph {
+    node[shape=rect,style=rounded]
+    read[label="dfs:1 stmt:1\nread(A)\l"]
+    if_p[label="dfs:2 stmt:2\nif (P)\l"]
+    if_q[label="dfs:8 stmt:3\nif (Q)\l"]
+    assign5[label="dfs:9 stmt:4\nA := 5\l"]
+    while_r[label="dfs:3 stmt:5\nwhile (R)\l"]
+    add1[label="dfs:4 stmt:6\nA := A + 1\l"]
+    enddo[label="dfs:5 stmt:7\nenddo\l"]
+    if_t[label="dfs:10 stmt:9\nif (T)\l"]
+    multiply3[label="dfs:11 stmt:10\nA := A * 3\l"]
+    add6[label="dfs:12 stmt:12\nA := A + 6\l"]
+    endif_t[label="dfs:13 stmt:13\nendif (T)\l"]
+    endif_q[label="dfs:6 stmt:14\nendif (Q)\l"]
+    write[label="dfs:7 stmt:15\nwrite(A)\l"]
+    read->if_p
+    if_p->if_q
+    if_q->assign5
+    if_q->if_t
+    if_p->while_r
+    while_r->add1
+    add1->enddo
+    if_t->add6
+    if_t->multiply3
+    if_t->endif_t
+    if_p->endif_q
+    endif_q->write
+    { rank=same; while_r->endif_q->if_q[style=invis] }
+    { rank=same; multiply3->add6->endif_t[style=invis]}
+    {
+        edge[style=dashed,color=gray]
+        assign5->while_r
+        while_r->endif_q
+        enddo:w->while_r:w
+        multiply3->endif_t
+        add6->endif_t
+        endif_t->endif_q
+    }
+}

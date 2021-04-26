@@ -1,0 +1,18 @@
+digraph {
+    node[shape=rect]
+    entry
+    if_p[label="if (P)"]
+    if_q[label="if (Q)"]
+    assign1[label="A1 := 1"]
+    assign2[label="A2 := 2"]
+    merge[label="A3=ϕ(A1, A2)\lwrite(A3)\l"]
+    exit
+    entry->if_p
+    if_p->assign1[label="t"]
+    if_p->assign2[label="f"]
+    assign1->if_q
+    if_q->merge[label="t"]
+    if_q->exit[label="f"]
+    assign2->merge
+    merge->exit
+}

@@ -1,0 +1,13 @@
+digraph {
+    entry->idom_v->X
+    idom_v->a
+    idom_v->idom_u->b
+    idom_u->c
+    idom_u->u->w
+    idom_v->v
+    idom_v[label="idom(v)"]
+    idom_u[label="idom(u)"]
+    a[fontcolor=gray]
+    b[fontcolor=gray]
+    c[fontcolor=gray]
+}
