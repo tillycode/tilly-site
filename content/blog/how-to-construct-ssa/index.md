@@ -115,12 +115,12 @@ SSA形式可以被看作一个程序的性质，或者一个从不具备该性�
 
 考虑下面的图：
 
-![](example-cfg.svg)
+![example CFG](example-cfg.svg)
 
 其支配者树如下，其中节点$X$的标签为：
 $$\begin{gather*}(DF_{up}(X))\newline X[DF_{local}(X)|DF(X)]\end{gather*}$$
 
-![](example-dom-tree.svg)
+![example dominator tree](example-dom-tree.svg)
 
 下文中，前驱$Pred$、后继$Succ$和路径这些名词是CFG上的，而父亲$Parent$、孩子$Children$、祖先、子孙这些名词是指支配者树的。关于支配者树的计算我将在稍后给出。
 
@@ -285,5 +285,3 @@ $X,Y$是CFG节点，那么$Y$控制依赖于$X$，当且仅当在RCFG中$X\in DF
 
 [^cytron1991efficiently]: Cytron, R., Ferrante, J., Rosen, B. K., Wegman, M. N., & Zadeck, F. K. (1991). Efficiently computing static single assignment form and the control dependence graph. *ACM Transactions on Programming Languages and Systems (TOPLAS)*, 13(4), 451-490.
 [^lengauer1979fast]: Lengauer, T., & Tarjan, R. E. (1979). A fast algorithm for finding dominators in a flowgraph. *ACM Transactions on Programming Languages and Systems (TOPLAS)*, 1(1), 121-141.
-
-

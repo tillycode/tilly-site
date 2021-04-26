@@ -678,7 +678,6 @@ $u=1$时构建的树。
 </figcaption>
 </figure>
 
-
 [^tu1995efficient]: P. Tu and D. Padua, “Efficient building and placing of gating functions,” in *Proceedings of the ACM SIGPLAN 1995 conference on Programming language design and implementation - PLDI ’95*, 1995.
 [^cytron1991efficiently]: R. Cytron, J. Ferrante, B. K. Rosen, M. N. Wegman, and F. K. Zadeck, “Efficiently computing static single assignment form and the control dependence graph,” *ACM Trans. Program. Lang. Syst.*, vol. 13, no. 4, pp. 451–490, 1991.
 [^ottenstein1990program]: K. J. Ottenstein, R. A. Ballance, and A. B. MacCabe, “The program dependence web: a representation supporting control-, data-, and demand-driven interpretation of imperative languages,” in *Proceedings of the ACM SIGPLAN 1990 conference on Programming language design and implementation - PLDI ’90*, 1990.
