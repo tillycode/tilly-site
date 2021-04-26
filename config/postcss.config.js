@@ -13,6 +13,7 @@ module.exports = {
       safelist: [
         'lazyloaded',
         'table',
+        'lntable',
         'thead',
         'tbody',
         'tr',
