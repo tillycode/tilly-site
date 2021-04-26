@@ -1,0 +1,16 @@
+digraph {
+    node[shape=rect]
+    entry[label="A0 := 0"]
+    if_p[label="A4 := μ(A0, γ(b, A3, ∅))\lif (P)\l"]
+    assign1[label="A1 := A4 + 1"]
+    assign2[label="A2 := A4 + 2"]
+    merge[label="A3 := γ(c, A1, A2)\lQ' := !Q\lA5 := η(Q', A3)\lwhile (Q)\l"]
+    exit[label="write(A5)"]
+    entry->if_p
+    if_p->assign1[label="t"]
+    if_p->assign2[label="f"]
+    assign1->merge
+    assign2->merge
+    merge->if_p[label="t"]
+    merge->exit[label="f"]
+}

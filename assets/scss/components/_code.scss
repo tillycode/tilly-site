@@ -13,7 +13,7 @@ code {
   padding: 0.25rem 0.5rem;
 }
 
-pre {
+pre:not(.chroma) {
   margin: 2rem 0;
 }
 
@@ -27,7 +27,7 @@ pre code {
   scrollbar-color: transparent transparent;
 }
 
-.hljs {
+:not(.chroma) > .hljs {
   padding: 1.25rem 1.5rem;
 }
 
@@ -39,7 +39,7 @@ pre code {
     border-radius: 0;
   }
 
-  pre {
+  pre:not(.chroma) {
     margin: 2rem -1.5rem;
   }
 }

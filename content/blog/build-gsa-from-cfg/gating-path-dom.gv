@@ -1,0 +1,7 @@
+digraph {
+    node[shape=rect,style=rounded]
+    entry->a
+    a->b
+    a->c
+    a->d->e
+}

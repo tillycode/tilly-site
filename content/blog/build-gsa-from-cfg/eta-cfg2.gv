@@ -1,0 +1,12 @@
+digraph {
+    node[shape=rect]
+    entry[label="A := 0"]
+    l1[label="A := A + 1"]
+    switch[label="A := A + 2\lswitch (P)\l"]
+    write[label="write(A)"]
+    entry->l1
+    l1->switch
+    switch:nw->l1:sw[label="1"]
+    switch:se->switch:ne[label="2"]
+    switch->write[label="default"]
+}

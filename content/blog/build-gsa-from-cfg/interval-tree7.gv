@@ -1,0 +1,27 @@
+digraph {
+    node[shape=rect]
+    1[label="1\n"]
+    2[label="2\nR: Λ"]
+    3[label="3\nR: γ(P,Λ,γ(Q,Λ,∅))",color="red"]
+    4[label="4\nR: γ(R,Λ,∅)"]
+    5[label="5\nR: Λ"]
+    6[label="6\nR: ...",color="red"]
+    7[label="7\nR: Λ"]
+    8[label="8\nR: γ(P,∅,Λ)"]
+    9[label="9\nR: γ(Q,Λ,∅)"]
+    10[label="10\nR: γ(Q,∅,Λ)"]
+    11[label="11\nR: γ(T,Λ,∅)"]
+    12[label="12\nR: γ(T,∅,Λ)"]
+    13[label="13\nR: Λ",color="red"]
+    1->2
+    2->8
+    2->3
+    2->6
+    3->4->5
+    6->7
+    8->9
+    8->10
+    10->11
+    10->12
+    10->13
+}

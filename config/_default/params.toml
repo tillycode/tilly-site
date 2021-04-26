@@ -1,25 +1,24 @@
 # Meta Data for SEO
 
 ## Homepage
-title = "Doks"
+title = "Tilly"
 titleSeparator = "-"
-titleAddition = "Modern Documentation Theme"
-description = "Doks is a Hugo theme helping you build modern documentation websites that are secure, fast, and SEO-ready — by default."
+titleAddition = "Soving the undecideables"
+description = "Tilly是一个针对C语言的值流分析静态工具。"
 
 ## Open Graph + Twitter Cards
-images = ["doks.png"]
-twitterSite = "henkverlinde"
-twitterCreator = "henkverlinde"
-facebookAuthor = "verlinde.henk"
-facebookPublisher = "verlinde.henk"
-ogLocale = "en_US"
+images = ["tilly.png"]
+twitterSite = "sunziping2016"
+twitterCreator = "sunziping2016"
+facebookAuthor = "sunziping2016"
+facebookPublisher = "sunziping2016"
+ogLocale = "zh_CN"
 
 ## JSON-LD
 schemaType = "Organization"
-schemaLogo = "logo-doks.png"
-schemaTwitter = "https://twitter.com/henkverlinde"
-schemaLinkedIn = "https://www.linkedin.com/in/henkverlinde/"
-schemaGitHub = "https://github.com/h-enk"
+schemaLogo = "logo-tilly.png"
+schemaTwitter = "https://twitter.com/sunziping2016"
+schemaGitHub = "https://github.com/sunziping2016"
 schemaSection = "blog"
 
 ## Sitelinks Search Box
@@ -43,7 +42,7 @@ alert = false
 alertText = "Like Doks? <a class=\"alert-link\" href=\"https://github.com/h-enk/doks/stargazers\">Star on GitHub</a>. Thanks!</a>"
 
 # Edit Page
-docsRepo = "https://github.com/h-enk/doks"
+docsRepo = "https://github.com/sunziping2016/tilly-site"
 editPage = false
 
 [options]
@@ -55,4 +54,4 @@ editPage = false
   bootStrapJs = false
   breadCrumb = false
   highLight = true
-  kaTex = false
+  kaTex = true

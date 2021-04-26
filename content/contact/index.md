@@ -7,4 +7,4 @@ draft: true
 images: []
 ---
 
-{{< email user="hello" domain="getdoks.org" >}}
+{{< email user="me" domain="szp.io" >}}

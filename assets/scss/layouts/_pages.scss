@@ -1,10 +1,16 @@
-.docs-content > h2[id]::before,
-.docs-content > h3[id]::before,
-.docs-content > h4[id]::before {
-  display: block;
-  height: 6rem;
+.docs-content > h2[id],
+.docs-content > h3[id],
+.docs-content > h4[id],
+.blog-content > h2[id],
+.blog-content > h3[id],
+.blog-content > h4[id] {
+  padding-top: 6rem;
   margin-top: -6rem;
-  content: "";
+}
+
+.docs-content p,
+.blog-content p {
+  text-align: justify;
 }
 
 .anchor {
@@ -42,4 +48,8 @@ p.meta {
 .breadcrumb {
   margin-top: 2.25rem;
   font-size: $font-size-base;
+}
+
+img {
+  max-width: 100%;
 }
