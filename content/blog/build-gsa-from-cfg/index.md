@@ -7,7 +7,7 @@ lastmod: 2021-04-27T02:14:11+08:00
 draft: false
 weight: 50
 images: ["build-gsa-from-cfg.jpg"]
-contributors: []
+contributors: [szp]
 ---
 
 内容主要来自这篇[^tu1995efficient]论文。
@@ -70,7 +70,7 @@ contributors: []
 对于两个不同的自然循环，它们可能有3种关系：
 
 1. 互相分离：没有任何节点共享；
-2. 互相嵌套：一个的循环头支配另一个循环中的所有节点；
+2. 互相嵌套：一个的循环头严格支配另一个循环头；
 3. 共享循环头：循环头是共享的。
 
 对于第3种情况，可以添加公共的循环尾合并为一个循环。进而循环只剩下两种关系：**分离**，**嵌套**。
@@ -615,7 +615,35 @@ endif
 
 合并之后，就有最终的计算结果：$\gamma(P,\Lambda^1,\Lambda^2)$。经过重命名的步骤后，就能得到想要的gating函数了。再次强调这里的上标不是数据流上的版本号，而是控制流的入边，切勿搞混。
 
+有时候，类似$\gamma(P,\Lambda,\Lambda)$并没有出现在我们感兴趣的合并节点上，这时候可直接改为$\Lambda$。对于不存在死循环的CFG，另合并节点为$u$，一般发生在$u=idom\_{post}(idom\_{pre}(u))$。这里通过下标区别前向立即支配者和反向立即支配者。
+
 ### 算法
+
+这个算法输出以下3个数据结构：
+
+- $\Phi: Map\langle CFGNode,bool\rangle$：CFG节点是否需要放置$\gamma$或$\mu$函数；
+- $GP: Map\langle CFGNode,PathExpression\rangle$：从立即支配者到该节点的路径表达式；
+- $G^\*: Map\langle CFGNode,PathExpression\rangle$：对于循环头，从该节点出发沿循环体回到该节点的路径表达式（如果有共享循环头的多个自然循环，这些自然循环全都会被考虑）；其他情况为$\varnothing$。
+
+算法的输出是：当$\Phi[v]$为真的时候，如果$G^\*[v]=\varnothing$，那么就在$v$处插入$\gamma$函数，其值即为$GP[v]$；否则插入$\mu$函数，其值为$\mu(GP[v],G^\*[v])$。
+
+算法还会用到临时变量：
+
+- $ListP: Array\langle(e = (w,v)::CFGEdge,subroot(w)::CFGNode,p::PathExpression)\rangle$：数组的元素是三元组，其中$e$是边，以$w$为起点，$v$为终点。$subroot(w)$是一个CFG节点，在支配树上它即是$w$的祖先，又是$v$或$v$的兄弟节点。$p$是路径$subroot(w)\xrightarrow{\*}w\rightarrow v$的路径表达式。之所以在这里引入一个临时数组，再分两次遍历，是为了确保遍历的顺序。
+
+接下来，我给出算法的伪代码，算法的输入是包含某变量赋值节点的集合$\mathcal{X}::Set\langle CFGNode\rangle$：
+
+1. 初始化：对每个$v\in N$（$N$是CFG节点的集合）：
+   1. $\Phi[v]\leftarrow false$
+   2. $GP[v]\leftarrow\varnothing$
+   3. $G^\*[v]\leftarrow\varnothing$
+2. 对每个$u\in N$，以支配者树后序遍历（前序遍历的逆也行）的顺序遍历：
+   1. 对于$v\in children(u)$：
+      1. 对于每个$e=(w,v)\in E$（$E$是CFG边的集合）
+         1. 如果$w=u$，那么：
+            1. $GP[v]\leftarrow GP[v]\cup(e)$
+         2. 否则：
+            1. $(\phi,subroot(w),p)\leftarrow EVAL(e)$
 
 ### 完整的例子
 
