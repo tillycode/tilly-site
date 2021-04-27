@@ -621,15 +621,15 @@ endif
 
 这个算法输出以下3个数据结构：
 
-- $\Phi: Map\langle CFGNode,bool\rangle$：CFG节点是否需要放置$\gamma$或$\mu$函数；
-- $GP: Map\langle CFGNode,PathExpression\rangle$：从立即支配者到该节点的路径表达式；
-- $G^\*: Map\langle CFGNode,PathExpression\rangle$：对于循环头，从该节点出发沿循环体回到该节点的路径表达式（如果有共享循环头的多个自然循环，这些自然循环全都会被考虑）；其他情况为$\varnothing$。
+- $\Phi::Set\langle CFGNode\rangle$：需要放置$\gamma$或$\mu$函数的CFG节点；
+- $GP::Map\langle CFGNode,PathExpression\rangle$：从立即支配者到该节点的路径表达式（不考虑循环，即所有gating path）；
+- $G^\*::Map\langle CFGNode,PathExpression\rangle$：对于循环头，从该节点出发沿循环体回到该节点的路径表达式（如果有共享循环头的多个自然循环，这些自然循环全都会被考虑）；其他情况为$\varnothing$。
 
-算法的输出是：当$\Phi[v]$为真的时候，如果$G^\*[v]=\varnothing$，那么就在$v$处插入$\gamma$函数，其值即为$GP[v]$；否则插入$\mu$函数，其值为$\mu(GP[v],G^\*[v])$。
+算法的输出是：对任何$v\in\Phi$，如果$G^\*[v]=\varnothing$，那么就在$v$处插入$\gamma$函数，其值即为$GP[v]$；否则插入$\mu$函数，其值为$\mu(GP[v],G^\*[v])$。
 
 算法还会用到临时变量：
 
-- $ListP: Array\langle(e = (w,v)::CFGEdge,subroot(w)::CFGNode,p::PathExpression)\rangle$：数组的元素是三元组，其中$e$是边，以$w$为起点，$v$为终点。$subroot(w)$是一个CFG节点，在支配树上它即是$w$的祖先，又是$v$或$v$的兄弟节点。$p$是路径$subroot(w)\xrightarrow{\*}w\rightarrow v$的路径表达式。之所以在这里引入一个临时数组，再分两次遍历，是为了确保遍历的顺序。
+- $ListP::Array\langle(e = (w,v)::CFGEdge,p::PathExpression)\rangle$：数组的元素是二元组，其中$e$是边，以$w$为起点，$v$为终点。我们用$subroot(w)$代表一个CFG节点，在支配树上它即是$w$的祖先，又是$v$本身或$v$的兄弟节点。$p$是路径$subroot(w)\xrightarrow{\*}w\rightarrow v$的路径表达式。之所以在这里引入一个临时数组，是为了分两次遍历，以确保遍历的顺序。
 
 接下来，我给出算法的伪代码，算法的输入是包含某变量赋值节点的集合$\mathcal{X}::Set\langle CFGNode\rangle$：
 
@@ -638,12 +638,66 @@ endif
    2. $GP[v]\leftarrow\varnothing$
    3. $G^\*[v]\leftarrow\varnothing$
 2. 对每个$u\in N$，以支配者树后序遍历（前序遍历的逆也行）的顺序遍历：
-   1. 对于$v\in children(u)$：
+   1. $ListP = [~]$
+   2. 对于$v\in children(u)$：
       1. 对于每个$e=(w,v)\in E$（$E$是CFG边的集合）
          1. 如果$w=u$，那么：
             1. $GP[v]\leftarrow GP[v]\cup(e)$
          2. 否则：
-            1. $(\phi,subroot(w),p)\leftarrow EVAL(e)$
+            1. $(\phi,p)\leftarrow EVAL(e)$
+            2. 如果$\phi$为真，$\Phi\leftarrow\Phi\cup\\{v\\}$
+            3. $ListP\leftarrow[\dots ListP,(e,,p)]$
+   3. 对$children(u)$拓扑排序
+   4. 对于$v\in children(u)$，以拓扑顺序遍历：
+      1. 对于每个$(e=(w,v),p)\in ListP$：
+         1. 如果$subroot(w)=v$：
+            1. $G^\*[v]\leftarrow G^\*[v]\cup p$
+         2. 否则：
+            1. $GP[v]\leftarrow GP[v]\cup (GP[subroot(w)]\cdot p)$
+            2. 如果$subroot(w)\in\Phi$为真，$\Phi\leftarrow\Phi\cup\\{v\\}$
+      2. <span style="color:red">$UPDATE(v,GP[v])$</span>
+
+<span style="color:red">红色的部分原论文似乎是错放到了内层循环中，这里已经更改。</span>
+
+接下来我们给出这里用到的3个函数，注意$EVAL()$的含义是有变化的。$UPDATE()$函数额外包含了一个简化的过程。由于支配者树是一种特殊的归约树，我们不必引入$LINK()$。
+
+|函数|描述|
+|:-|:-|
+|$EVAL(e)$|令$e=(w,b)$，假设从$subroot(w)$到$v$的**树上**路径为$r=w_0=subroot(w)\rightarrow w_1\rightarrow\cdots\rightarrow w_k=w$，返回值的$p$为$(R(r)\cdot R(w_1)\cdot\ldots\cdot R(w)\cdot e)$，返回值的$\phi$在$\vee_{i=0}^k(w_i\in\Phi\lor w_i\in\mathcal{X})$时为真，否则为假|
+|$UPDATE(v,R)$|$R(v):=R$，这里$R$中$\gamma$函数的值输入全部为$\Lambda$时，$\gamma$函数会被替换成$\Lambda$，因为之后的标号将给值输入同样的标号，没必要使用$\gamma$函数|
+
+#### 算法解释
+
+以后序遍历或前序遍历的逆的顺序遍历支配者树，可以确保孩子在父亲节点遍历之前被遍历到。对于$e=(w,v)\in E$，可以分为以下几种情况。
+
+1. $e$来自$v$的立即支配者（即$w=u=idom(v)$），那么这条边就是$v$的gating path，将其直接存入$GP[v]$；
+2. 其他情况下一定会有$u\gg w$，也就是$w$在$u$支配子树中处在非根的位置，这时有两种情况：
+   1. $e$来自$v$支配树上的兄弟节点的子树（$subroot(w)\neq v$），即$e\in cycle(v)$。此时路径$u\xrightarrow{+}subroot(w)\xrightarrow{\*} w\rightarrow v$是$v$的gating path，应当被并到$GP[v]$中。
+   2. $e$来自$v$支配子树（$subroot(w)=v$），即$e\in cycle(v)$。此时路径$v=subroot(w)\xrightarrow{\*} w\rightarrow v$是循环，应当被并到$G^\*[v]$中。
+
+注意到2.1情形，$u\xrightarrow{+}subroot(w)$这个子路径需要引用到正在计算中的其他$GP[v],v\in children(u)$。所以这就需要引入拓扑排序。而$subroot(w)\xrightarrow{\*} w\rightarrow v$部分的路径则是使用Tarjan的算法由$EVAL()$给出的。
+
+#### 拓扑排序细节
+
+拓扑排序是在以$children(u)$为节点，以这些节点对应的子图之间的边为边的图上进行的。解释一下这样做的原因。在把所有的$v\in children(u)$对应的子图归约成一个点后，可能存在3类边：
+
+1. $v\rightarrow u$这就是未来的$cycle(u)$，这种边是不会影响当前处理的先后顺序的
+2. $v$离开$u$控制区域的边，未来某些节点的$noncycle(\dots)$。同样这种边是不会影响顺序的
+3. $v$到其他$children(u)$子图的边，这类边的前驱需要先算其$GP$，而后继计算的时候就需要引用前驱的$GP$，这类边决定了运算的顺序。
+
+这个拓扑排序的顺序，其实就是前面的归约序列顺序。
+
+#### 标号细节
+
+其实所有$GP[v]\leftarrow GP[v]\cup(\dots)$的地方，就需要对$\dots$进行标号，也就是在算法2.2.1.1.1和2.4.1.2.2都需要标号。
+
+#### 算法的拆解
+
+这个算法其实是可以被拆解的成3部分：
+
+1. 归约序列的计算：这部分采用了在支配者树上进行拓扑排序的算法来做的。这部分可以被替换。
+2. 路径表达式的计算：计算$GP$和$G^\*$，这两个都是不依赖于输入$\mathcal{X}$的，是图的内在性质，因而对于多个变量，这部分是不需要重复计算的。
+3. $\gamma$和$\mu$插入位置的计算：这部分是原论文gating path性质的实践，可以在计算路径表达式的同时计算出来。实际上这部分算法可以被替换成Cytron的算法。对于多个变量，这部分是需要重复计算的，之后的重命名算法也需要重复计算。
 
 ### 完整的例子
 
