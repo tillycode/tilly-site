@@ -227,3 +227,9 @@ body {
 .katex {
   font-size: $font-size-md;
 }
+
+@media print {
+  body {
+    padding-top: 0;
+  }
+}

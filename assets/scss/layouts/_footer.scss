@@ -18,3 +18,9 @@
     font-size: $font-size-base;
   }
 }
+
+@media print {
+  .footer {
+    display: none !important;
+  }
+}

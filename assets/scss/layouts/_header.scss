@@ -266,3 +266,10 @@
 .navbar .menu-btn:checked ~ .menu-icon:not(.steps) .navicon::after {
   top: 0;
 }
+
+@media print {
+  .header-bar,
+  .navbar {
+    display: none !important;
+  }
+}
