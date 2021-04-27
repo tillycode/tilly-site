@@ -556,7 +556,7 @@ R_1, &\text{if}~R_2=\varnothing \newline
 
 对于路径表达式$R_1$和$R_2$，定义它们的拼接：
 
-$$R_1\cup R_2:=\begin{cases}
+$$R_1\cdot R_2:=\begin{cases}
 \varnothing, &\text{if}~R_1=\varnothing~\text{or}~R_2=\varnothing \newline
 R_2, &\text{if}~R_1=\Lambda \newline
 R_1, &\text{if}~R_2=\Lambda \newline
@@ -772,7 +772,7 @@ sequence: $11\rightarrow 13,12\rightarrow 13\Rightarrow11,12,13$
 |^|$(13,6)$|$subroot(w)=8,\~~p(subroot(w),v)=\gamma(Q,\varnothing,\Lambda^2),\~~\phi=\texttt{true},\~~\Phi(6)=\texttt{true},\~~ListP(6)=\{(3,6,\gamma(R,\varnothing,\Lambda^1)),(8,6,\gamma(Q,\varnothing,\Lambda^2))\}$|
 |$8$|$(2,8)$|$GP(2)=\gamma(P,\varnothing,\Lambda)$|
 
-sequence: $8\rightarrow 6,8\rightarrow 3,3\rightarrow 6\Rightarrow 8,3,$
+sequence: $8\rightarrow 6,8\rightarrow 3,3\rightarrow 6\Rightarrow 8,3,6$
 
 |merge:$v$|$subroot(w),v,p(subroot(w),v)$|影响|
 |:-:|:-:|:-|
@@ -800,11 +800,7 @@ sequence: $8\rightarrow 6,8\rightarrow 3,3\rightarrow 6\Rightarrow 8,3,$
 
 ![interval tree 7](interval-tree7.svg)
 
-<figcaption>
-
-$u=1$时构建的树。
-
-</figcaption>
+<figcaption>$u=1$时构建的树。</figcaption>
 </figure>
 
 [^tu1995efficient]: P. Tu and D. Padua, “Efficient building and placing of gating functions,” in *Proceedings of the ACM SIGPLAN 1995 conference on Programming language design and implementation - PLDI ’95*, 1995.
