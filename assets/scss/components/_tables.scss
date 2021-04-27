@@ -1,3 +1,8 @@
+table {
+  overflow-x: auto;
+  display: block;
+}
+
 table:not(.lntable) {
   @extend .table;
 
@@ -5,8 +10,6 @@ table:not(.lntable) {
 }
 
 table.lntable {
-  display: block;
-
   td:nth-child(2) {
     width: 100%;
   }

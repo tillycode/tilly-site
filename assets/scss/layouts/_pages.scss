@@ -9,8 +9,13 @@
 }
 
 .docs-content p,
-.blog-content p {
+.blog-content p,
+.docs-content ul,
+.blog-content ul,
+.docs-content ol,
+.blog-content ol {
   text-align: justify;
+  overflow-x: auto;
 }
 
 .anchor {
