@@ -1,14 +1,21 @@
 {{ define "main" }}
-<div class="row justify-content-center">
-  <div class="col-lg-11 col-xl-9 mx-xl-auto">
-    <article class="blog-content">
-      <div class="blog-header">
-        <h1>{{ .Title }}</h1>
-        {{ partial "main/blog-meta.html" . }}
-      </div>
-      <p class="lead">{{ .Params.lead | safeHTML }}</p>
-      {{ .Content }}
-    </article>
-  </div>
+<div class="row flex-xl-nowrap">
+  {{ if ne .Params.toc false -}}
+  <nav class="docs-toc d-none d-xl-block col-xl-3" aria-label="Secondary navigation">
+    {{ partial "sidebar/docs-toc.html" . }}
+  </nav>
+  {{ end -}}
+  {{ if .Params.toc -}}
+  <article class="blog-content col-lg-11 col-xl-9">
+  {{ else -}}
+  <article class="blog-content col-lg-11 col-xl-9 mx-xl-auto">
+  {{ end -}}
+    <div class="blog-header">
+      <h1>{{ .Title }}</h1>
+      {{ partial "main/blog-meta.html" . }}
+    </div>
+    <p class="lead">{{ .Params.lead | safeHTML }}</p>
+    {{ .Content }}
+  </article>
 </div>
 {{ end }}

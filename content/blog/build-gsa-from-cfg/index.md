@@ -105,7 +105,7 @@ V3 := phi(V1, V2)
 ```
 
 </div>
-<div style="align-self:center;margin:1em">$$\Rightarrow$$</div>
+<div style="align-self:center;margin:2em">$$\Rightarrow$$</div>
 <div>
 
 ```fortran
@@ -176,7 +176,7 @@ write(A);
 ```
 
 </div>
-<div style="align-self:center;margin:1em">$$\Rightarrow$$</div>
+<div style="align-self:center;margin:2em">$$\Rightarrow$$</div>
 <div>
 
 ![eta GSA example](eta-gsa-cfg1.svg)
@@ -221,13 +221,13 @@ write(A);
 ```
 
 </div>
-<div style="align-self:center;margin:1em">$$\Rightarrow$$</div>
+<div style="align-self:center;margin:2em">$$\Rightarrow$$</div>
 <div>
 
 ![eta CFG example2](eta-cfg2.svg)
 
 </div>
-<div style="align-self:center;margin:1em">$$\Rightarrow$$</div>
+<div style="align-self:center;margin:2em">$$\Rightarrow$$</div>
 <div>
 
 ![eta GSA CFG example2](eta-gsa-cfg2.svg)
@@ -515,6 +515,107 @@ $\gamma$和$\mu$就是原来$\phi$函数的变种，因而它们可以使用Cytr
 红色路径为gating path，此时$n=3$，且$X$不位于$P_u$上。
 
 ## GSA构建算法
+
+### 用Gating函数代表路径表达式
+
+我们使用路径表达式来表达两节点之间路径集合，最终目的是找到立即支配者到合并节点的路径集合，后者就是要插入$\gamma$和$\mu$的地方。重新定义路径表达式的原子表达式和运算规则，使之运算的结果就是表示路径成立的$\gamma$函数。这样路径表达式计算完毕，就自然得到了$\gamma$函数。
+
+#### 原子路径表达式
+
+首先，我们使用$\Lambda$表示路径可达，$\varnothing$表示路径不可达。
+
+然后，我们考虑对于一条边，它的路径表达式：
+
+1. 如果是`if (B)`的`then`分支出边，该边的路径表达式为：$\gamma(B,\Lambda,\varnothing)$；
+2. 如果是`if (B)`的`else`分支出边，该边的路径表达式为：$\gamma(B,\varnothing,\Lambda)$；
+3. 如果是唯一出边，该边的路径表达式为：$\Lambda$；
+
+这里，$\gamma(B,\Lambda,\varnothing)$可以被理解为，当$B$为真时，路径可达；当$B$为假时，路径不可达。`else`分支类似理解。更多分支可以通过定义$\gamma(B,e_1,e_2,\dots,e_n)$来表示，其中$n$是分支数。
+
+#### 复合路径表达式
+
+接下来，我们就需要定义路径表达式的$\cup$，$~\cdot~$运算。$\*$运算不定义，因为之后用不到，但其实它也无法定义，这是被$\gamma$函数无法表达循环这件事本身所限制住的（主要是因为$B$可能会变）。
+
+##### 并集
+
+对于路径表达式$R_1$和$R_2$，定义它们的并：
+
+$$R_1\cup R_2:=\begin{cases}
+R_2, &\text{if}~R_1=\varnothing \newline
+R_1, &\text{if}~R_2=\varnothing \newline
+\gamma(B,(R_{1_t}\cup R_{2_t}),(R_{1_f}\cup R_{2_f})), &\text{if}~\begin{aligned}R_1=\gamma(B,R_{1_t},R_{1_f}) \newline R_2=\gamma(B,R_{2_t},R_{2_f})\end{aligned} \newline
+\end{cases}$$
+
+前两个条件很容易理解，如果两个路径集合取并集，其中一个是不可达，留下另一个就可以了。关于最后一个情况，有三个疑问。
+
+1. 最后一条情况一定被满足么？是的，可以归纳证明类型相同的路径表达式，如果包含$\gamma$，其条件一定是相同的。
+2. 语义上如何理解？$B$为真的时候，两种情况中真的路径求并就可以了；`else`分支类似。
+3. 类型一致么？是的，可以归纳证明$R_1$、$R_{1_t}$、$R_{1_f}$以及$R_2$等6个路径表达式是同一类型，所以子表达式中的$\cup$没问题。
+
+##### 拼接
+
+对于路径表达式$R_1$和$R_2$，定义它们的拼接：
+
+$$R_1\cup R_2:=\begin{cases}
+\varnothing, &\text{if}~R_1=\varnothing~\text{or}~R_2=\varnothing \newline
+R_2, &\text{if}~R_1=\Lambda \newline
+R_1, &\text{if}~R_2=\Lambda \newline
+\gamma(B,(R_{1_t}\cdot R_2),(R_{1_f}\cdot R_2)), &\text{if}~R_1=\gamma(B,R_{1_t},R_{1_f}) \newline
+\end{cases}$$
+
+这里就讲解语义上的理解：前三条很直白，最后一条也就是$R_2$分配到`then`和`else`分支。
+
+从拼接的构造过程，我们就能得到[$\gamma$函数，含有谓词的合并](#gamma函数含有谓词的合并)一节中的结论：（不考虑循环回边）在合并节点处的路径表达式的根$\gamma$函数的谓词输入就是合并节点的立即支配者的条件；其值输入则是（如果有）嵌套的$\gamma$函数，从外到里则与立即支配者到合并节点的路径对应。
+
+需要注意到的是，反复运用合并和拼接后，路径表达式只有嵌套的$\gamma$、$\Lambda$和$\varnothing$组成（不包含$~\cdot~$和$\cup$）。
+
+##### 例子
+
+{{< highlight fortran "linenos=table" >}}
+if (P) then
+    A := 1
+else
+    A := 2
+endif
+{{< / highlight >}}
+
+这里，我们把`endif`视作一个基本块，并用行号来表示CFG节点。我们的目标是求出立即支配者1（`if`）到被支配者5（`endif`）的路径表达式。
+
+首先给出原子路径表达式：
+
+|边|原子路径表达式|
+|:-:|:-|
+|$1\rightarrow 2$|$\gamma(P,\Lambda,\varnothing)$|
+|$1\rightarrow 4$|$\gamma(P,\varnothing,\Lambda)$|
+|$2\rightarrow 5$|$\Lambda$|
+|$4\rightarrow 5$|$\Lambda$|
+
+再给出复合路径表达式：
+
+|路径|路径表达式|
+|:-:|:-|
+|$1\rightarrow 2\rightarrow 5$|$\gamma(P,\Lambda,\varnothing)\cdot\Lambda=\gamma(P,\Lambda,\varnothing)$|
+|$1\rightarrow 4\rightarrow 5$|$\gamma(P,\varnothing,\Lambda)\cdot\Lambda=\gamma(P,\varnothing,\Lambda)$|
+|$\bigcup 1\xrightarrow{\*}5$|$\gamma(P,\Lambda,\varnothing)\cup\gamma(P,\varnothing,\Lambda)=\gamma(P,\Lambda,\Lambda)$|
+
+那么对于复杂的可归约图，求解路径表达式就需要按照一个顺序。其计算方法就应当参见先前说的[Tarjan的算法](#可归约控制流图的路径表达式计算)。
+
+有些人就有疑问了，对于绝大多数情况，路径表达式的值输入都是$\Lambda$，没有什么意义。其实，这里还缺最后一步，就是在合并节点处，依据流入边的顺序对$\Lambda$进行标号。这一步有点类似$\phi$函数的标号，方便之后重命名标上版本号（注意标号与版本号的区别）。
+
+为什么给$\Lambda$标号？因为在消除死代码后，合并节点的每个$\Lambda$都代表着一种可能流入的值（假定entry包含对所有变量的默认初始化）。
+
+#### 标号
+
+标号是很简单的操作。在合并节点求路径表达式时，会把所有流入的路径取个并。**在取并之前**，依据流入路径的顺序给$\Lambda$标号即可。
+
+例如上例中，计算$\bigcup 1\xrightarrow{\*}5$时，会合并两个路径，给它们标上号：
+
+1. $\*\xrightarrow{\*}2\rightarrow 5$：$\gamma(P,\Lambda^1,\varnothing)$；
+2. $\*\xrightarrow{\*}4\rightarrow 5$：$\gamma(P,\varnothing,\Lambda^2)$；
+
+合并之后，就有最终的计算结果：$\gamma(P,\Lambda^1,\Lambda^2)$。经过重命名的步骤后，就能得到想要的gating函数了。再次强调这里的上标不是数据流上的版本号，而是控制流的入边，切勿搞混。
+
+### 算法
 
 ### 完整的例子
 
