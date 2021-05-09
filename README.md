@@ -10,7 +10,7 @@
 
 ```bash
 # Clone项目
-git clone git@github.com:aaaawt/sweetszp.git
+git clone git@github.com:sunziping2016/tilly-site.git
 # 安装依赖
 npm install
 # 开发博客（会根据你的更改即使地显示在本地网页上）
