@@ -6,7 +6,7 @@ date: 2021-04-27T00:49:08+08:00
 lastmod: 2021-04-27T00:49:08+08:00
 draft: false
 weight: 50
-images: ["how-to-construct-ssa.jpg"]
+images: []
 contributors: [szp]
 ---
 

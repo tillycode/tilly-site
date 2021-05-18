@@ -1,0 +1,40 @@
+digraph {
+  node[shape=rect]
+  S[label="S 1 (0, 1)"]
+  C[label="C 2 (1, 7)"]
+  F[label="F 3 (1, 10)"]
+  I[label="I 4 (1, 11)"]
+  K[label="K 5 (1, 12)"]
+  G[label="G 6 (1, 8)"]
+  J[label="J 7 (1, 9)"]
+  B[label="B 8 (1, 2)"]
+  E[label="E 9 (8, 5)"]
+  H[label="H 10 (8, 6)"]
+  A[label="A 11 (8, 3)"]
+  D[label="D 12 (8, 4)"]
+  S->C->F->I->K
+  C->G->J
+  S->B->E->H
+  B->A->D
+  {
+    rank=same
+    C->B[style=invis]
+  }
+  {
+    rank=same
+    F->G->E->A[style=invis]
+  }
+  {
+    rank=same
+    I->J->H->D[style=invis]
+  }
+  {
+    edge[style=dashed,color="#00000044"]
+    K->S[constraint=false]
+    I->S
+    G->I
+    J->I
+    H->K[constraint=false]
+    H->B[constraint=false]
+  }
+}

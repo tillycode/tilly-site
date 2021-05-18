@@ -6,7 +6,7 @@ date: 2021-04-27T02:14:11+08:00
 lastmod: 2021-04-27T02:14:11+08:00
 draft: false
 weight: 50
-images: ["build-gsa-from-cfg.jpg"]
+images: []
 contributors: [szp]
 ---
 
