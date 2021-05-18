@@ -37,22 +37,22 @@ jobs:
       with:
         hugo-version: 'latest'
         extended: true
-    
+
     - name: Check install Hugo
       run: hugo version
 
     - name: Install dependencies
       run: npm ci
-    
+
     - name: Check for linting errors
       run: npm test
-    
+
     - name: Delete temporary directories
       run: npm run clean
-    
+
     - name: Build production website
       run: npm run build
 
-    - name: Deploy to wt.szp.io
+    - name: Deploy to tillycode.com
       if: ${{ matrix.os == 'ubuntu-latest' && matrix.node-version == '14.x' }}
       run: rsync -avz --delete public/ sun@tillycode.com:/srv/http/tillycode/

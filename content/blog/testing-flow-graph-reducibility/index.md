@@ -116,19 +116,21 @@ $T_2$：如果$(v,w)$是$w$唯一的入边，且$w\neq s$，将$w$合并进$v$�
    3. $Q:=P$（$Q$是一个待处理的工作队列）
    4. 当$Q\neq\varnothing$时不断循环：
       1. $x:=pop(Q)$
-      2. 对于每个进入$x$前向边、树边、交叉边$(y,x)$：
+      2. <span style="color:red">如果$w>x\lor w+ND(w)\leq x$：</span>
+         1. <span style="color:darkred">终止，$G$不可归约</span>
+      3. <span style="color:red">如果$\text{HIGHPT(x)}=0$：</span>
+         1. <span style="color:red">$\text{HIGHPT(x)}:=w$</span>
+      4. 对于每个进入$x$前向边、树边、交叉边$(y,x)$：
          1. $y':=\text{FIND}(y)$
-         2. 如果$w>y'\lor w+ND(w)\leq y'$：
-            1. <span style="color:red">终止，$G$不可归约</span>
-         3. 如果$y'\notin P$且$y'\neq w$：
+         2. 如果$y'\notin P$且$y'\neq w$：
             1. $P:=P\cup\\{y'\\}$
             2. $push(Q,y')$
-         4. 如果$\text{HIGHPT(y')}=0$：
-            1. $\text{HIGHPT(y')}:=w$
    5. <span style="color:gray">注释：现在$P=P(w)$</span>
    6. 对于每个$x\in P$：
-      1. $UNION(x,w,w)$
+      1. $\text{UNION}(x,w,w)$
 4. <span style="color:green">$G$可归约</span>
+
+<span style="color:red">标鲜红色的代码被我从内层循环移了出来。原作者的伪代码似乎会漏给循环尾赋$\text{HIGHPT}$。要查看算法差异可以见页底引用的原论文。</style>
 
 </div>
 
