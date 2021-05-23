@@ -26,7 +26,7 @@
     "lint": "npm run -s lint:scripts && npm run -s lint:styles && npm run -s lint:markdown",
     "lint:scripts": "eslint assets/js assets/lambda config",
     "lint:styles": "stylelint \"assets/scss/**/*.{css,sass,scss,sss,less}\"",
-    "lint:markdown": "markdownlint *.md content/**/*.md",
+    "lint:markdown": "markdownlint \"*.md\" \"content/**/*.md\"",
     "release": "standard-version",
     "release:dry-run": "standard-version --dry-run",
     "server": "hugo server",

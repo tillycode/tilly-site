@@ -161,7 +161,7 @@ $T_2$：如果$(v,w)$是$w$唯一的入边，且$w\neq s$，将$w$合并进$v$�
 
 [^tarjan1973testing]: Tarjan, Robert. "Testing flow graph reducibility." *Proceedings of the fifth annual ACM symposium on Theory of computing*. 1973.
 
-<style>
+<style scoped>
 .theorem {
     box-shadow: 0 0.5px 3px rgba(0,0,0,0.3);
     padding: 1rem 1rem 0;

@@ -84,7 +84,7 @@ $$\begin{cases}
 DF_1=DF(\mathcal{X})\newline
 DF_{i+1}=DF(\mathcal{X}\cup DF_i)
 \end{cases}$$
-也就是说$DF^+(\mathcal{X})$是$\mathcal{X}$的支配边界，并上支配边界的支配边界，等等。然后这篇论文给出了最重要的定理：**令$\mathcal{X}$为某个变量所有赋值语句出现过的CFG节点集合，$DF^+(\mathcal{X})$是赋值语句交汇的点，也就是最少的需要为该变量插入$\phi$函数的地方。** 依据这个定理，Cytron给出了两步算法，先是放置$\phi$函数，再重命名变量（给变量加上版本号）。
+也就是说$DF^+(\mathcal{X})$是$\mathcal{X}$的支配边界，并上支配边界的支配边界，等等。然后这篇论文给出了最重要的定理：令$\mathcal{X}$为某个变量所有赋值语句出现过的CFG节点集合，$DF^+(\mathcal{X})$是赋值语句交汇的点，也就是最少的需要为该变量插入$\phi$函数的地方。依据这个定理，Cytron给出了两步算法，先是放置$\phi$函数，再重命名变量（给变量加上版本号）。
 
 ### GSA（Gated单一赋值）形式
 
@@ -863,7 +863,7 @@ sequence: $8\rightarrow 6,8\rightarrow 3,3\rightarrow 6\Rightarrow 8,3,6$
 [^havlak1994construction]: P. Havlak, “Construction of thinned gated single-assignment form,” in Languages and Compilers for Parallel Computing, Berlin, Heidelberg: Springer Berlin Heidelberg, 1994, pp. 477–499.
 [^tarjan1981fast]: R. E. Tarjan, “Fast algorithms for solving path problems,” *J. ACM*, vol. 28, no. 3, pp. 594–614, 1981.
 
-<style>
+<style scoped>
 .subfigures-centered {
     display: flex;
     align-items: center;
