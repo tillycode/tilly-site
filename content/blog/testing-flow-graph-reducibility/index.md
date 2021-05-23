@@ -138,6 +138,8 @@ $T_2$：如果$(v,w)$是$w$唯一的入边，且$w\neq s$，将$w$合并进$v$�
 
 这个算法本身不是构造性的，但我们可以通过$\text{HIGHPT}(v)$构造归约序列。我们给每个$G$上的节点赋予一个数$\text{SNUMBER}$，使得对于树边$(v,w)$，$\text{SNUMBER}(v)<\text{SNUMBER}(w)$；对于交叉边$(v,w)$，$\text{SNUMBER}(v)<\text{SNUMBER}(w)$。这步可以通过深度优先搜索时，先遍历序号大的实现。再运行完算法后，我们就得到了一个二元组$(\text{HIGHPT}(v),\text{SNUMBER}(v))$，而后我们对节点按二元组字典序排序，其中二元组第一个元素降序，第二个元素升序。这个排序可以在$O(V)$的时间内通过两轮基数排序完成。
 
+<span style="color:purple">这里实际上就是对DAG进行了拓扑排序。</span>
+
 <figure>
 
 ![流图示例](example.svg)
