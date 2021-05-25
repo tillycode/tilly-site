@@ -36,5 +36,6 @@ digraph {
     J->I
     H->K[constraint=false]
     H->B[constraint=false]
+    B->D->H
   }
 }
