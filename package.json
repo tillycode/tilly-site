@@ -1,7 +1,7 @@
 {
   "name": "@hyas/doks",
   "description": "Doks theme",
-  "version": "0.3.0",
+  "version": "0.3.3",
   "browserslist": [
     "defaults"
   ],
@@ -14,7 +14,7 @@
     "init": "shx rm -rf .git && git init -b main",
     "create": "exec-bin bin/hugo/hugo new",
     "prestart": "npm run clean",
-    "start": "exec-bin bin/hugo/hugo server  --bind=0.0.0.0 --disableFastRender",
+    "start": "exec-bin bin/hugo/hugo server --bind=0.0.0.0 --disableFastRender",
     "prebuild": "npm run clean",
     "build": "exec-bin bin/hugo/hugo --gc --minify",
     "build:preview": "npm run build -D -F",
@@ -54,7 +54,7 @@
     "katex": "^0.13",
     "lazysizes": "^5.3",
     "markdownlint-cli": "^0.27",
-    "mermaid": "^8.10.2",
+    "mermaid": "^8.11",
     "postcss": "^8.3",
     "postcss-cli": "^8.3",
     "pre-commit": "^1.2.2",
@@ -64,6 +64,6 @@
     "stylelint-config-standard": "^22.0"
   },
   "otherDependencies": {
-    "hugo": "0.84.0"
+    "hugo": "0.84.4"
   }
 }

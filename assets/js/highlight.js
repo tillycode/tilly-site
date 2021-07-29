@@ -22,7 +22,7 @@ hljs.registerLanguage('c', c);
 hljs.registerLanguage('fortran', fortran);
 
 document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('pre code').forEach((block) => {
+  document.querySelectorAll('pre code:not(.language-mermaid)').forEach((block) => {
     hljs.highlightElement(block);
   });
 });
