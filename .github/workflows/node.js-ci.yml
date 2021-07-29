@@ -13,10 +13,11 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        node-version: [14.x]
+        node-version: [16.x]
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Check out Hyas project
+      uses: actions/checkout@v2
 
     - name: Install SSH key
       uses: shimataro/ssh-key-action@v2
@@ -24,19 +25,11 @@ jobs:
         key: ${{ secrets.SSH_KEY }}
         known_hosts: ${{ secrets.KNOWN_HOSTS }}
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
-
     - name: Set up Node.js ${{ matrix.node }}
       uses: actions/setup-node@v2
       with:
         hugo-version: 'latest'
         extended: true
-
-    - name: Check install Hugo
-      run: hugo version
 
     - name: Install dependencies
       run: npm ci
@@ -44,12 +37,9 @@ jobs:
     - name: Check for linting errors
       run: npm test
 
-    - name: Delete temporary directories
-      run: npm run clean
-
     - name: Build production website
       run: npm run build
 
     - name: Deploy to tillycode.com
-      if: ${{ matrix.os == 'ubuntu-latest' && matrix.node-version == '14.x' }}
+      if: ${{ matrix.os == 'ubuntu-latest' && matrix.node-version == '16.x' }}
       run: rsync -avz --delete public/ sun@tillycode.com:/srv/http/tillycode/
