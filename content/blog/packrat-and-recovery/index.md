@@ -23,7 +23,7 @@ contributors: [szp]
 
 其中：
 
-- $\mathrm{LR}=(seed:\mathrm{AST},rule:\mathrm{R{\scriptsize ULE}},head:\mathrm{H{\scriptsize EAD}},next:\mathrm{lR})$
+- $\mathrm{LR}=(seed:\mathrm{AST},rule:\mathrm{R{\scriptsize ULE}},head:\mathrm{H{\scriptsize EAD}}~\text{or}~\mathrm{\scriptsize NIL},next:\mathrm{lR})$
 - $\mathrm{H{\scriptsize EAD}}=(rule: \mathrm{R{\scriptsize ULE}},involvedSet:\mathrm{S{\scriptsize ET}}~\text{of}~\mathrm{R{\scriptsize ULE}},evalSet:\mathrm{S{\scriptsize ET}}~\text{of}~\mathrm{R{\scriptsize ULE}})$
 - $\mathrm{M{\scriptsize EMO}E{\scriptsize NTRY}}=(ans: \mathrm{AST}~\text{or}~\mathrm{LR},pos:\mathrm{P{\scriptsize OSITION}})$
 
@@ -120,7 +120,7 @@ contributors: [szp]
 
 - $R: \mathrm{R{\scriptsize ULE}}$
 - $P: \mathrm{P{\scriptsize OSITION}}$
-- $M: \mathrm{M{\scriptsize EMO}E{\scriptsize NTRY}}$
+- $M: \mathrm{M{\scriptsize EMO}E{\scriptsize NTRY}}$，其中$M.ans~\mathbf{is}~\mathrm{LR1}$
 
 返回值：
 
@@ -167,6 +167,84 @@ contributors: [szp]
   - $m.ans\leftarrow ans$
   - $m.pos\leftarrow pos$
 - $\textbf{return}~m$
+{.list-code}
+
+### 合并后的算法
+
+参数：
+
+- $R: \mathrm{R{\scriptsize ULE}}$
+- $P: \mathrm{P{\scriptsize OSITION}}$
+
+返回值：
+
+- $\mathrm{AST}$
+
+过程：
+
+- $\textbf{let}~m=\mathrm{M{\scriptsize EMO}}(R, P)$
+- $\textbf{let}~h=\mathrm{H{\scriptsize EADS}}(P)$
+- <span class="comment">$\triangleright$如果不是在扩展种子的阶段，直接返回存储的值</span>
+- $\textbf{if}~h\neq\mathrm{\scriptsize NIL}$
+  - <span class="comment">$\triangleright$不要计算那些这次左递归没涉及的规则</span>
+  - $\textbf{if}~m=\mathrm{\scriptsize NIL}~\text{and}~R\notin\\{h.read\\}\cup h.involvedSet$
+    - $m\leftarrow~\mathbf{new}~\mathrm{M{\scriptsize EMO}E{\scriptsize NTRY}}(\mathrm{\scriptsize FAIL},P)$
+  - <span class="comment">$\triangleright$只允许涉及的规则被计算一次</span>
+  - $\textbf{elif}~R\in h.evalSet$
+    - $h.evalSet\leftarrow h.evalSet\setminus\\{R\\}$
+    - $\textbf{let}~ans=\mathrm{E{\scriptsize VAL}}(R.body)$
+    - $m.ans\leftarrow ans$
+    - $m.pos\leftarrow pos$
+- $\mathbf{if}~m=\mathrm{\scriptsize NIL}$
+  - <span class="comment">$\triangleright$创建一个新的$\mathrm{LR}$，并入栈</span>
+  - $\mathbf{let}~lr=\mathbf{new}~\mathrm{LR}(\mathrm{\scriptsize FAIL},R,\mathrm{\scriptsize NIL},LRStack)$
+  - $LRStack\leftarrow lr$
+  - <span class="comment">$\triangleright$记忆化$lr$，并解析$R$</span>
+  - $m\leftarrow\mathbf{new}~\mathrm{M{\scriptsize EMO}E{\scriptsize NTRY}}(lr,P)$
+  - $\mathrm{M{\scriptsize EMO}}(R,P)\leftarrow m$
+  - $\mathbf{let}~ans=\mathrm{E{\scriptsize VAL}}(R.body)$
+  - <span class="comment">$\triangleright lr$出栈</span>
+  - $LRStack\leftarrow LRStack.next$
+  - $m.pos\leftarrow Pos$
+  - $\mathbf{if}~lr.head\neq\mathrm{\scriptsize NIL}$
+    - $lr.seed\leftarrow ans$
+    - $\mathbf{let}~h=m.ans.head$
+    - $\textbf{if}~h.rule\neq R$
+      - $\textbf{return}~m.ans.seed$
+    - $\textbf{else}$
+      - $m.ans\leftarrow m.ans.seed$
+      - $\textbf{if}~m.ans=\mathrm{\scriptsize FAIL}$
+        - $\textbf{return}~\mathrm{\scriptsize FAIL}$
+      - $\textbf{else}$
+        - $\mathrm{H{\scriptsize EADS}}(P)\leftarrow h$
+        - $\mathbf{while}~\mathrm{\scriptsize TRUE}$
+          - $Pos\leftarrow P$
+          - $h.evalSet\leftarrow\mathrm{C{\scriptsize OPY}}(h.involvedSet)$
+          - $\mathbf{let}~ans=\mathrm{E{\scriptsize VAL}}(R.body)$
+          - $\mathbf{if}~ans=\mathrm{\scriptsize FAIL}~\text{or}~Pos\leq m.pos$
+            - $\mathbf{break}$
+          - $m.ans\leftarrow ans$
+          - $m.pos\leftarrow Pos$
+        - $\mathrm{H{\scriptsize EADS}}(P)\leftarrow\mathrm{\scriptsize NIL}$
+        - $Pos\leftarrow m.pos$
+        - $\mathbf{return}~m.ans$
+  - $\mathbf{else}$
+    - $m.ans\leftarrow ans$
+    - $\mathbf{return}~ans$
+- $\mathbf{else}$
+  - $Pos\leftarrow m.pos$
+  - $\mathbf{if}~m.ans~\text{is}~\mathrm{LR}$
+    - $\mathbf{let}~L=m.ans$
+    - $\mathbf{if}~L.head=\mathrm{\scriptsize NIL}$
+      - $L.head\leftarrow\mathbf{new}~\mathrm{H\scriptsize{EAD}}(R,\\{\\},\\{\\})$
+    - $\mathbf{let}~s=LRStack$
+    - $\mathbf{while}~s.head\neq L.head$
+      - $s.head\leftarrow L.head$
+      - $L.head.involvedSet\leftarrow L.head.involvedSet\cup\\{s.rule\\}$
+      - $s\leftarrow s.next$
+    - $\mathbf{return}~L.seed$
+  - $\mathbf{else}$
+    - $\mathbf{return}~m.ans$
 {.list-code}
 
 [^warth2008packrat]: Warth, Alessandro, James R. Douglass, and Todd Millstein. "Packrat parsers can support left recursion." *Proceedings of the 2008 ACM SIGPLAN symposium on Partial evaluation and semantics-based program manipulation*. 2008.
