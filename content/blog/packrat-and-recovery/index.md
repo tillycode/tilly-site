@@ -10,6 +10,8 @@ images: []
 contributors: [szp]
 ---
 
+已经废弃了，因为算法感觉很复杂不可靠。
+
 ## Packrat Parser用于解决左递归[^warth2008packrat]
 
 ### 算法
