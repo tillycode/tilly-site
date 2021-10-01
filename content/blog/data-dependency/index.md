@@ -1,7 +1,7 @@
 ---
 title: "构建数据依赖的实现"
-description: "这篇文章综合了先前的“从CFG直接构建GSA的算法”，梳理其核心思想，并且给出了我的更清晰的实现。"
-lead: "这篇文章综合了先前的“从CFG直接构建GSA的算法”，梳理其核心思想，并且给出了我的更清晰的实现。"
+description: "这篇文章综合了先前的“从CFG直接构建GSA的算法”，梳理其核心思想，总结DFST、支配、归约的各种性质、算法，并且给出了我的更清晰的实现。"
+lead: "这篇文章综合了先前的“从CFG直接构建GSA的算法”，梳理其核心思想，总结DFST、支配、归约的各种性质、算法，并且给出了我的更清晰的实现。"
 date: 2021-09-28T17:20:26+08:00
 lastmod: 2021-09-28T17:20:26+08:00
 draft: false
@@ -11,6 +11,14 @@ contributors: [szp]
 ---
 
 上一篇文章的链接在这里：[从CFG直接构建GSA的算法]({{< relref "/blog/build-gsa-from-cfg/index.md" >}})。
+
+<x-card>
+
+**注意：未经许可，禁止转载**。通过[OpenTimestamps](https://opentimestamps.org/)，我已经获得了该文最早的区块链时间戳。有且只有我（[me@szp.io](mailto:me@szp.io)）持有其证明。因此如果你能伪造区块链，请你投计算机顶会；如果不能，不要未经我的许可，转载文章内容，否则我保留追究权利。
+
+<x-warning comment="引用不当"></x-warning>这篇文章尚在编写中，因而还没给出完整的引用。如果你很迫切想知道前人的工作，可以看上一篇文章“[从CFG直接构建GSA的算法]({{< relref "/blog/build-gsa-from-cfg/index.md" >}})”的底部。
+
+</x-card>
 
 ## 数据依赖的定义
 
@@ -123,11 +131,11 @@ DFST中各种边的性质
 
 ### 支配的概念
 
-CFG上，节点$x$**支配**节点$y$，是指从入口节点到$y$的每条路径都经过了$x$。由于具有自反性<x-comment>（任何节点都支配自己）</x-comment>、反对称性<x-comment>（否则到$x$需要经过$y$，到$y$需要经过$x$，结果到达$x$或$y$没有有穷的路径）</x-comment>、传递性，这是个偏序关系<x-comment>（故目前看支配关系可以对应到一个DAG）</x-comment>。为了方便我们认为$x$小于$y$。节点$x$**严格支配**节点$y$就是$x$**支配**$y$且$x\neq y$。
+CFG上，节点$x$**支配**节点$y$，是指从入口节点到$y$的每条路径都经过了$x$。由于具有自反性<x-comment>（任何节点都支配自己）</x-comment>、反对称性<x-comment>（否则到$x$需要经过$y$，到$y$需要经过$x$，结果到达$x$或$y$没有有穷的路径）</x-comment>、传递性，这是个偏序关系<x-comment>（故目前看支配关系可以对应到一个DAG）</x-comment>。为了方便，我们认为$x$小于$y$。节点$x$**严格支配**节点$y$就是$x$**支配**$y$且$x\neq y$。
 
-非入口节点$x$的**立即支配者**$y$就是所有严格支配者中极大的<x-comment>（进一步是“最大的”，因为唯一）</x-comment>，它是存在的<x-comment>（至少入口节点是其严格支配者）</x-comment>，且唯一的<x-comment>（如果不同的$y$和$z$同时出现在所有入口节点到$x$的路径上，那么一定有$y$严格支配$z$或$z$严格支配$y$。否则就会出现两条路径，一条$y$出现在了$z$之前，另一条$z$出现在了$y$之前，那么拼接一下就可以得到不经过$y$的路径）</x-comment>。
+非入口节点$x$的**立即支配者**$y$就是所有严格支配者中极大的<x-comment>（进一步是“最大的”，看接下来的“唯一”）</x-comment>，它是存在的<x-comment>（至少入口节点是其严格支配者）</x-comment>，且唯一的<x-comment>（如果不同的$y$和$z$同时出现在所有入口节点到$x$的路径上，那么一定有$y$严格支配$z$或$z$严格支配$y$。否则就会出现两条路径，一条$y$出现在了$z$之前，另一条$z$出现在了$y$之前，那么拼接一下就可以得到不经过$y$的路径）</x-comment>。
 
-**非入口节点的立即支配者存在且唯一**，和**支配的偏序关系**是支配的两条独立的性质。通过这两条性质，就能知道支配关系组成了一个带根树，根即为入口节点。这颗树我们称为**支配树**。
+**非入口节点的立即支配者存在且唯一**，和**支配的偏序关系**是支配的两条独立性质。通过这两条性质，就能知道支配关系组成了一个带根树，根即为入口节点。这颗树我们称为**支配树**。
 
 ### 支配算法
 
@@ -137,7 +145,7 @@ $$\begin{cases}\mathrm{StrictDoms}(x)=\varnothing,&\text{if}~x=Entry\\\\\mathrm{
 
 #### DAG控制流图的支配算法
 
-上式似乎可以递归。对于DAG控制流图，我们发现这个定义是个**结构递归**，因而对于任意基本块$x$，满足上式的$\mathrm{StrictDoms}(x)$是唯一确定的，并且按照拓扑排序即可在确定的时间内完成计算。在稍后的章节中，我们将看到这个递归算法在忽略回边的情况下，同样适用于可归约图<x-wip></x-wip>。
+上式似乎可以递归。对于DAG控制流图，我们发现这个定义是个**结构递归**<x-comment>（可以找到一种顺序，在求$\mathrm{StrictDoms}(x)$时，对任意$y\in\mathrm{Pred}(x)$，$\mathrm{StrictDoms}(y)$已经求出）</x-comment>，因而对于任意基本块$x$，满足上式的$\mathrm{StrictDoms}(x)$是唯一确定的，并且按照拓扑排序即可在确定的时间内完成计算。在稍后的章节中，我们将看到这个递归算法在忽略回边的情况下，同样适用于可归约图<x-wip></x-wip>。
 
 实际计算中，我们会发现如果用bit vector作为集合，其集合的交并运算非常复杂，并且没有完全利用支配的“树”的性质。注意到：
 
@@ -152,7 +160,7 @@ $$\mathrm{idom}(x)=\max(\mathrm{StrictDoms}(x))$$
 $$\begin{align*}
 \mathrm{idom}(x)&=\max(\mathrm{StrictDoms}(x))\\\\&=\max(\bigcap_{y\in\mathrm{Pred}(x)}y\cup\mathrm{StrictDoms}(y))\\\\&=\max(\bigcap_{y\in\mathrm{Pred}(x)}\\{y,\mathrm{idom}(y),\mathrm{idom}(\mathrm{idom}(y)),\dots\\})\\\\&=\mathrm{LCA}(\mathrm{Pred}(x)),~~~~\text{if}~x\neq Entry\end{align*}$$
 
-这里$\mathrm{LCA}$是指支配者树上的最低公共祖先。
+这里$\mathrm{LCA}$是指支配者树上的最低公共祖先。总结一下，就得到了下面的算法：
 
 <x-card>
 <x-algorithm id="lst:dag-dom-tree">DAG支配树算法。</x-algorithm>
@@ -165,11 +173,15 @@ $$\begin{align*}
 </x-pseudo-code>
 </x-card>
 
+实际实现中，给每个节点一个计数器，初始化为入边的数量。使用一个队列，初始化只包含$Entry$。每次处理一个基本块后，遍历出边，减少终止节点的计数器，减到0了，就加入队列。所以不考虑$\mathrm{LCA}(\mathrm{Pred}(x))$的计算量时，复杂度为$\Omicron(|E|)$（$E$为CFG的边集）。
+
+有趣的是，你会发现这个算法是F. Allen求interval算法的一个进阶版。<x-wip>值得深挖！</x-wip>
+
 #### $\mathrm{LCA}$的计算
 
-未加说明的话，以下讨论是对于一般的CFG包括DAG形式的讨论的。
+未加说明的话，以下讨论是对于一般的CFG，不仅限于DAG形式的。
 
-多元素集合上的$\mathrm{LCA}(S)$可以归结为两个变量的$\mathrm{LCA}(a, b)$<x-comment>（因为$\mathrm{LCA}$有结合律）</x-comment>。单元素集合上的$\mathrm{LCA}(\\{x\\})=x$。空集上的$\mathrm{LCA}(\varnothing)$是ill-defined<x-comment>（因为$\mathrm{LCA}$无单位元）</x-comment>。当然，对于所有基本块可达的情况下$\mathrm{Pred}(x)\neq\varnothing,\text{if}~x\neq Entry$，所以之前的式子定义良好。接下来就考虑如何快速地求解两个变量的$\mathrm{LCA}(a, b)$。
+多元素集合上的$\mathrm{LCA}(S)$可以归结为两个变量的$\mathrm{LCA}(a, b)$<x-comment>（因为$\mathrm{LCA}$有结合律）</x-comment>。单元素集合上的$\mathrm{LCA}(\\{x\\})=x$。空集上的$\mathrm{LCA}(\varnothing)$是ill-defined<x-comment>（因为$\mathrm{LCA}$无单位元）</x-comment>。当然，在所有基本块可达的情况下，如果$x\neq Entry$，则$\mathrm{Pred}(x)\neq\varnothing,\text{if}$，所以<x-warning comment="指向不明">之前的式子</x-warning>定义良好。接下来就考虑如何快速地求解两个变量的$\mathrm{LCA}(a, b)$。
 
 <x-card>
 <x-theorem id="th:dom-post-order">支配树上的祖父子孙关系，在DFST上得到了保留。精确地来说：
@@ -187,7 +199,7 @@ $$\begin{cases}\mathrm{Ancestors}\_{DomTree}(x)=\mathrm{Doms}(x)\subseteq\mathrm
 基于此，我们得到了下面的定理:
 
 <x-card>
-<x-theorem id="th:dom-post-order2">若DFST上对基本块$x$的逆后序遍历编号$\mathrm{RevPostOrder}(x)$，则支配树上，其子孙的编号大于等于$\mathrm{RevPostOrder}(x)$
+<x-theorem id="th:dom-post-order2">若DFST上对基本块$x$的逆后序遍历编号$\mathrm{RevPostOrder}(x)$，则支配树上，其子孙的$\mathrm{RevPostOrder}$大于等于$\mathrm{RevPostOrder}(x)$
 
 $$\forall y(y\in\mathrm{Descendants}\_{DomTree}(x)\rightarrow\mathrm{RevPostOrder}(y)\geq\mathrm{RevPostOrder}(x))$$
 
@@ -203,7 +215,7 @@ $$\forall y(y\in\mathrm{Descendants}\_{DomTree}(x)\rightarrow\mathrm{RevPostOrde
 <x-algorithm id="lst:dom-lca">支配树上$\mathrm{LCA}(a, b)$的算法。</x-algorithm>
 <x-pseudo-code for="lst:dom-lca">
 
-1. 依据DFST上的逆后序遍历对基本块进行编号，记这个编号为$\mathrm{RevPostOrder}(x)$<x-comment>（$Entry$的编号最小）</x-comment>
+1. 依据DFST上的逆后序遍历对基本块进行编号，记这个编号为$\mathrm{RevPostOrder}(x)$
 2. 循环：如果$a\neq b$：
    1. 如果$\mathrm{RevPostOrder}(a)<\mathrm{RevPostOrder}(b)$：
       1. $b\leftarrow\mathrm{Parent}\_{DomTree}(b)$<x-comment>（分支1）</x-comment>
@@ -214,12 +226,14 @@ $$\forall y(y\in\mathrm{Descendants}\_{DomTree}(x)\rightarrow\mathrm{RevPostOrde
 </x-pseudo-code>
 </x-card>
 
-这个算法不仅简单，而且性能不错，因为能使用连续的数组提高缓存命中率。分支1和分支2可能会交替执行，如<x-ref-figure ref="fig:dom-dfst-relation"></x-ref-figure>中，$N\_0,\dots,N\_4$插入到支配树后，计算$\mathrm{LCA}(\mathrm{Pred}(N\_5))$即$\mathrm{LCA}(N\_4,N\_3)$时，会：
+这个算法不仅简单，而且性能不错，因为能使用连续的数组提高缓存命中率。注意，分支1和分支2可能会交替执行：如<x-ref-figure ref="fig:dom-dfst-relation"></x-ref-figure>中，$N\_0,\dots,N\_4$插入到支配树后，计算$\mathrm{LCA}(\mathrm{Pred}(N\_5))$即$\mathrm{LCA}(N\_4,N\_3)$时，会：
 
 1. 找到$N\_4$的父亲$N\_1$<x-comment>（分支2）</x-comment>
 2. 找到$N\_3$的父亲$N\_0$<x-comment>（分支1）</x-comment>
 3. 找到$N\_1$的父亲$N\_0$<x-comment>（分支2）</x-comment>
-4. $\mathrm{LCA}(N\_4,N\_3) = N\_0$
+4. 得出：$\mathrm{LCA}(N\_4,N\_3) = N\_0$
+
+#### 一般控制流图的支配算法
 
 <!--
           First Pass  Second Pass
@@ -249,21 +263,19 @@ $$\forall y(y\in\mathrm{Descendants}\_{DomTree}(x)\rightarrow\mathrm{RevPostOrde
 -->
 
 <style scoped>
-.card {
+x-card {
     display: block;
     box-shadow: 0 0.5px 3px rgba(0,0,0,0.3);
     padding: .5rem 1rem;
-    overflow: hidden;
     border-radius: .2rem;
     margin: 1rem 0;
 }
 
-.comment {
+x-comment {
     opacity: .5;
 }
 
-.wip, .warning {
-    font-weight: bold;
+x-wip, x-warning {
     background-color: #ffeb3b;
     overflow: visible;
     padding: .1em;
@@ -272,36 +284,40 @@ $$\forall y(y\in\mathrm{Descendants}\_{DomTree}(x)\rightarrow\mathrm{RevPostOrde
     box-shadow: 0 0 2px #9d8c00;
 }
 
-.wip {
+x-warning sup {
+    opacity: .5;
+}
+
+x-wip {
     color: blue !important;
 }
 
-.wip::before {
+x-wip::before {
     content: '🚧（施工中）'
 }
 
-.warning {
+x-warning {
     color: red !important;
 }
 
-.warning::before {
+x-warning::before {
     content: '⚠️'
 }
 
-.theorem, .proof, .algorithm, .pseudo-code {
+x-theorem, x-proof, x-algorithm, x-pseudo-code {
     display: block;
     margin: .5em 0;
     padding-top: 6rem;
     margin-top: -6rem;
 }
 
-.theorem .theorem-head, .proof .proof-head {
+x-theorem .theorem-head, x-proof .proof-head {
     font-weight: bold;
     margin-right: .5em;
     color: darkblue;
 }
 
-.proof .proof-qed {
+x-proof .proof-qed {
     display: block;
     float: right;
     border: 1px solid black;
@@ -310,21 +326,21 @@ $$\forall y(y\in\mathrm{Descendants}\_{DomTree}(x)\rightarrow\mathrm{RevPostOrde
     margin : .3em;
 }
 
-.ref-theorem, .ref-algorithm {
+x-ref-theorem, x-ref-algorithm {
     display: inline-block;
 }
 
-.ref-theorem .ref-theorem-head {
+x-ref-theorem .ref-theorem-head {
     color: darkblue;
 }
 
-.algorithm .algorithm-head, .pseudo-code .pseudo-code-head {
+x-algorithm .algorithm-head, x-pseudo-code .pseudo-code-head {
     font-weight: bold;
     margin-right: .5em;
     color: darkgreen;
 }
 
-.ref-algorithm .ref-algorithm-head {
+x-ref-algorithm .ref-algorithm-head {
     color: darkgreen;
 }
 
@@ -343,7 +359,7 @@ figure .figure-head {
     color: darkmagenta;
 }
 
-.ref-figure .ref-figure-head {
+x-ref-figure .ref-figure-head {
     color: darkmagenta;
 }
 
@@ -353,7 +369,7 @@ figure .table-head {
     color: darkred;
 }
 
-.ref-figure .ref-table-head {
+x-ref-table .ref-table-head {
     color: darkred;
 }
 
@@ -376,28 +392,30 @@ table:not(.lntable) tr:last-child {
 class XCard extends HTMLElement {
     constructor() {
         super();
-        this.classList.add('card');
     }
 }
 
 class XWip extends HTMLElement {
     constructor() {
         super();
-        this.classList.add('wip');
     }
 }
 
 class XComment extends HTMLElement {
     constructor() {
         super();
-        this.classList.add('comment');
     }
 }
 
 class XWarning extends HTMLElement {
     constructor() {
         super();
-        this.classList.add('warning');
+        const comment = this.getAttribute('comment');
+        if (comment) {
+            const sup = document.createElement('sup');
+            sup.appendChild(document.createTextNode(`[${comment}]`));
+            this.appendChild(sup);
+        }
     }
 }
 
@@ -417,7 +435,6 @@ class XTheorem extends HTMLElement {
         head.classList.add('theorem-head');
         head.classList.add('anchor-head');
         this.insertBefore(head, this.firstChild);
-        this.classList.add('theorem');
     }
 }
 
@@ -440,7 +457,6 @@ class XProof extends HTMLElement {
         const tail = document.createElement('div');
         tail.classList.add('proof-qed');
         this.appendChild(tail);
-        this.classList.add('proof');
     }
 }
 
@@ -479,7 +495,6 @@ class XAlgorithm extends HTMLElement {
         head.classList.add('algorithm-head');
         head.classList.add('anchor-head');
         this.insertBefore(head, this.firstChild);
-        this.classList.add('algorithm');
     }
 }
 
@@ -499,7 +514,6 @@ class XPseudoCode extends HTMLElement {
         }
         head.classList.add('pseudo-code-head');
         this.insertBefore(head, this.firstChild);
-        this.classList.add('pseudo-code');
     }
 }
 
@@ -569,7 +583,6 @@ class XRefFigure extends HTMLElement {
             head.setAttribute('href', `#${name}`);
         }
         this.appendChild(head);
-        this.classList.add('ref-figure');
     }
 }
 
@@ -620,7 +633,6 @@ class XRefTable extends HTMLElement {
             head.setAttribute('href', `#${name}`);
         }
         this.appendChild(head);
-        this.classList.add('ref-table');
     }
 }
 
