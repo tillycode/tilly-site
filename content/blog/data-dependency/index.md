@@ -18,9 +18,11 @@ contributors: [szp]
 
 下图是一个简单的CFG，本文之后的所有示例都会基于这个图。本文中的CFG会被认为是**带入口节点、可以有重边、可以有自环的有向图**。
 
-![Example CFG](./example.svg)
+<x-figure src="./example-cfg.svg" id="fig:example-cfg">示例CFG</x-figure>
 
 上图各个合并节点入边的数据依赖如下：
+
+<x-table id="tab:example-cfg-data-dependency">
 
 |边的ID|数据依赖条件|
 |-:|:-|
@@ -31,15 +33,21 @@ contributors: [szp]
 |13|$\neg P\land\neg Q\land T$|
 |17|$P$|
 
+示例<x-ref-figure ref="fig:example-cfg"></x-ref-figure>中CFG的所有数据依赖条件
+
+</x-table>
+
 接下来，我将讲解现在是数据依赖算法的具体实现。
 
 ## 算法的步骤
 
 本算法是个多步骤的算法。具体各个步骤的依赖关系如下：
 
-![Algorithm Step Dependency Graph](./algo-steps.drawio.svg)
+<x-figure src="./algo-steps.svg" id="fig:algo-steps">数据依赖算法步骤</x-figure>
 
 各个步骤的输出及目的如下：
+
+<x-table id="tab:algo-steps">
 
 |编号|名称|输出|
 |-:|:-:|:-|
@@ -49,49 +57,67 @@ contributors: [szp]
 |4|归约序列|找到一个序列，序列的每个节点可以归约到后面的节点|
 |5|路径摘要|按照归约序列，计算从立即支配者出发的路径条件|
 
+算法的各个步骤
+
+</x-table>
+
 ## 深度优先生成树（DFST）
 
 ### DFST边的类别
 
-通过深度优先搜索构成的生成树，并按照遍历顺序进行先序编号，则原控制流图中的边可以被分成4种：
+通过深度优先搜索构成的生成树，则原控制流图中的边可以被分成4种：
 
 1. **前向边**：终点是起点的子孙，且不是自环边
 2. **回边**：终点是起点的祖父，且不是自环边
 3. **自环边**：起始与终止节点相同
 4. **交叉边**：终点既不是起点的子孙，也不是起点的祖父
 
-<x-comment>注：本文中的祖父是指节点、节点的父亲、节点的父亲的父亲等等组成的集合，其中也**包含节点自己**；子孙的概念类似。有些论文中的分类中会将生成树上的边称为**树边**，进而细分前向边，这里简化讨论不这么做。</x-comment>
+<x-comment>注：本文中的祖父是指***包含节点自己***的集合：节点、节点的父亲、节点的父亲的父亲等等组成的集合，其中也；子孙的概念类似。如果需要强调不包含自己，我会使用***严格祖先***、***严格子孙***。有些论文中的分类中会将生成树上的边称为***树边***，进而细分前向边，这里简化讨论不这么做。</x-comment>
 
 形象的分类，及其重要的性质如下图：
 
-![DFST Edge Categories](./dfst-edge.drawio.svg)
+<x-figure src="./dfst-edge.svg" id="fig:dfst-edge">DFST边的分类及性质</x-figure>
 
-例子如下，节点上的数字为节点的先序遍历序号：
+例子如下，节点上的数字为节点的逆后序遍历序号，要指出的一点是，**DFST的前序/后序/逆后序遍历特指一种遍历方式**，这个遍历是由生成方式决定的。因此当我们说DFST的逆后序遍历时，实际上是说CFG的逆后序遍历：
 
-![DFST Edge Example](./dfst-example.drawio.svg)
+<x-figure src="./dfst-example.svg" id="fig:dfst-example">示例DFST，标注了逆后序遍历序号及边的类型</x-figure>
 
-自环边和回边我们统称为**循环边**，而前向边和交叉边称为**非循环边**。
+自环边和回边我们统称为**循环边**，而前向边和交叉边统称为**非循环边**。
 
 ### DFST边的性质
 
 上图第1个性质显然，这里给出第2个性质的证明。
 
 <x-card>
-<x-theorem id="th:non-cycle-dag">由非循环边组成的子图是一个DAG。</x-theorem>
+<x-theorem id="th:non-cycle-dag">令DFST上节点$x$的逆后序遍历序号为$\mathrm{RevPostOrder}(x)$，那么对于任何非循环边（尤其是交叉边）$e$有
+
+$$\mathrm{RevPostOrder}(\mathrm{Dst}(e))>\mathrm{RevPostOrder}(\mathrm{Src}(e))$$
+
+</x-theorem>
 <x-proof for="th:non-cycle-dag"><x-wip></x-wip></x-proof>
 </x-card>
 
-上述的定理其实告诉我们，根据非循环边，我们可以进行拓扑排序<x-comment>（逆后序遍历，与先序遍历不等价）</x-comment>。这样各种边的性质就很清楚了：
+上述的定理其实告诉我们，由非循环边组成的子图是一个DAG，其拓扑排序的一种结果是$\mathrm{RevPostOrder}$。这样各种边的性质就很清楚了：
 
-|边的类别|边方向的序性质|
-|:-|:-|
-|前向边|增加|
-|自环边|不变|
-|回边|减少|
+<x-table id="tab:dfst-edge-properties">
+
+|边的类别|边方向的序性质|数学表示|
+|:-|:-|:-|
+|非循环边|增加|$\mathrm{RevPostOrder}(\mathrm{Dst}(e))>\mathrm{RevPostOrder}(\mathrm{Src}(e))$|
+|自环边|不变|$\mathrm{RevPostOrder}(\mathrm{Dst}(e))=\mathrm{RevPostOrder}(\mathrm{Src}(e))$|
+|回边|减少|$\mathrm{RevPostOrder}(\mathrm{Dst}(e))<\mathrm{RevPostOrder}(\mathrm{Src}(e))$|
+
+DFST中各种边的性质
+
+</x-table>
 
 这个性质很有用，比如：如果一条路径从树左边的节点前往了无子孙关系的右边的节点，那么一定是要经过回边的，因为只有回边能使拓扑序减少。
 
-最后，我们很关心的一个问题是，回边集合和非循环边集合会不会因为DFST遍历时边的优先选取而发生变化。遗憾的是，确实可能会发生变化。但如果控制流图满足可归约性，那么以入口节点为根的生成树所对应的回边集合和非循环边集合是不会变的。这也就是第3个性质，具体细节会在归约章节讨论<x-wip></x-wip>。
+最后，我们很关心的一个问题是，回边集合和非循环边集合会不会因为DFST遍历时边的优先选取而发生变化。遗憾的是，确实可能会发生变化。最小的例子如下图：
+
+<x-figure src="./variant-cycle-set.svg" id="fig:variant-cycle-set">展示了回边集合和非循环边集合会随DFST变化</x-figure>
+
+但如果控制流图可归约，那么DFST对应的回边集合和非循环边集合是不会变的。这也就是第3个性质，具体细节会在归约章节讨论<x-wip></x-wip>。
 
 ## 支配树
 
@@ -141,6 +167,8 @@ $$\begin{align*}
 
 #### $\mathrm{LCA}$的计算
 
+未加说明的话，以下讨论是对于一般的CFG包括DAG形式的讨论的。
+
 多元素集合上的$\mathrm{LCA}(S)$可以归结为两个变量的$\mathrm{LCA}(a, b)$<x-comment>（因为$\mathrm{LCA}$有结合律）</x-comment>。单元素集合上的$\mathrm{LCA}(\\{x\\})=x$。空集上的$\mathrm{LCA}(\varnothing)$是ill-defined<x-comment>（因为$\mathrm{LCA}$无单位元）</x-comment>。当然，对于所有基本块可达的情况下$\mathrm{Pred}(x)\neq\varnothing,\text{if}~x\neq Entry$，所以之前的式子定义良好。接下来就考虑如何快速地求解两个变量的$\mathrm{LCA}(a, b)$。
 
 <x-card>
@@ -149,39 +177,49 @@ $$\begin{align*}
 $$\begin{cases}\mathrm{Ancestors}\_{DomTree}(x)=\mathrm{Doms}(x)\subseteq\mathrm{Ancestors}\_{DFST}(x)\\\\\mathrm{Descendants}\_{DomTree}(x)=\mathrm{Doms}^{-1}(x)\subseteq\mathrm{Descendants}\_{DFST}(x)\end{cases}$$
 
 </x-theorem>
+<x-proof for="th:dom-post-order">从支配的定义得到。</x-proof>
 </x-card>
 
-这个定理很容易从支配的定义得到。形象地来说，支配者树比DFST更加扁。一个等价的描述是：如果将树的自上而下视作一个偏序关系，那么支配树的偏序关系是DFST的偏序关系的子集；另一个更有趣的描述是：支配树的偏序关系是所有DFST的偏序关系的交。个人最喜欢的描述是：**支配树是DFST中的某些支干重新接到了祖先上组成的新树**。
+形象地来说，支配者树比DFST更加扁。一个等价的描述是：如果将树的自上而下视作一个偏序关系，那么支配树的偏序关系是DFST的偏序关系的子集；另一个更有趣的描述是：支配树的偏序关系是所有DFST的偏序关系的交。个人最喜欢的描述是：**支配树是DFST中的某些支干重新接到了祖先上组成的新树**。下图是一个例子：
 
-这个定理告诉我们：
+<x-figure src="./dom-dfst-relation.svg" id="fig:dom-dfst-relation">DFST与支配树之间的关系</x-figure>
+
+基于此，我们得到了下面的定理:
 
 <x-card>
-<x-theorem id="th:dom-post-order2">依据DFST上的逆后序遍历对基本块进行编号，则支配树上：
+<x-theorem id="th:dom-post-order2">若DFST上对基本块$x$的逆后序遍历编号$\mathrm{RevPostOrder}(x)$，则支配树上，其子孙的编号大于等于$\mathrm{RevPostOrder}(x)$
 
-1. 每个节点的编号小于其子孙的编号
-2. <x-warning>兄弟子树的编号范围不重叠</x-warning>
+$$\forall y(y\in\mathrm{Descendants}\_{DomTree}(x)\rightarrow\mathrm{RevPostOrder}(y)\geq\mathrm{RevPostOrder}(x))$$
 
 </x-theorem>
+<x-proof for="th:dom-post-order2">从<x-ref-theorem ref="th:dom-post-order"></x-ref-theorem>和逆后序遍历的性质得到。</x-proof>
 </x-card>
 
-通俗一点就是支配树上有一种逆后序遍历/先序遍历，其产生的序列和DFST上的逆后序遍历<x-comment>（DFST只对应一种前序/后序的遍历方式）</x-comment>结果一样。因此就有了下面的算法。
+有些时候我们就会想能不能得到更强的定理：支配树上也一定存在一种先序遍历<x-comment>（等价表述“逆后序遍历”）</x-comment>的结果和DFST的逆后序遍历一样。答案是否定的，见<x-ref-figure ref="fig:dom-dfst-relation"></x-ref-figure>。
+
+基于<x-ref-theorem ref="th:dom-post-order2"></x-ref-theorem>就有了下面的算法。
 
 <x-card>
 <x-algorithm id="lst:dom-lca">支配树上$\mathrm{LCA}(a, b)$的算法。</x-algorithm>
 <x-pseudo-code for="lst:dom-lca">
 
-1. 依据DFST上的逆后序遍历对基本块进行编号，记这个编号为$\mathrm{Order}(x)$<x-comment>（$Entry$的编号最小）</x-comment>
+1. 依据DFST上的逆后序遍历对基本块进行编号，记这个编号为$\mathrm{RevPostOrder}(x)$<x-comment>（$Entry$的编号最小）</x-comment>
 2. 循环：如果$a\neq b$：
-   1. 如果$\mathrm{Order}(a)<\mathrm{Order}(b)$：
+   1. 如果$\mathrm{RevPostOrder}(a)<\mathrm{RevPostOrder}(b)$：
       1. $b\leftarrow\mathrm{Parent}\_{DomTree}(b)$<x-comment>（分支1）</x-comment>
-   2. 否则：<x-comment>（一定有$\mathrm{Order}(a)>\mathrm{Order}(b)$）</x-comment>
+   2. 否则：<x-comment>（一定有$\mathrm{RevPostOrder}(a)>\mathrm{RevPostOrder}(b)$）</x-comment>
       1. $a\leftarrow\mathrm{Parent}\_{DomTree}(a)$<x-comment>（分支2）</x-comment>
 3. 返回$a$
 
 </x-pseudo-code>
 </x-card>
 
-实际上，这个算法循环内的分支1和分支2不会出现交替执行，这来源于<x-ref-theorem ref="th:dom-post-order2"></x-ref-theorem>的性质2。因而这个算法不仅简单，而且性能不错，体现在：使用连续的数组提高缓存命中率，并利用了分支预测。
+这个算法不仅简单，而且性能不错，因为能使用连续的数组提高缓存命中率。分支1和分支2可能会交替执行，如<x-ref-figure ref="fig:dom-dfst-relation"></x-ref-figure>中，$N\_0,\dots,N\_4$插入到支配树后，计算$\mathrm{LCA}(\mathrm{Pred}(N\_5))$即$\mathrm{LCA}(N\_4,N\_3)$时，会：
+
+1. 找到$N\_4$的父亲$N\_1$<x-comment>（分支2）</x-comment>
+2. 找到$N\_3$的父亲$N\_0$<x-comment>（分支1）</x-comment>
+3. 找到$N\_1$的父亲$N\_0$<x-comment>（分支2）</x-comment>
+4. $\mathrm{LCA}(N\_4,N\_3) = N\_0$
 
 <!--
           First Pass  Second Pass
@@ -210,200 +248,394 @@ $$\begin{cases}\mathrm{Ancestors}\_{DomTree}(x)=\mathrm{Doms}(x)\subseteq\mathrm
 4 3  1 2
 -->
 
+<style scoped>
+.card {
+    display: block;
+    box-shadow: 0 0.5px 3px rgba(0,0,0,0.3);
+    padding: .5rem 1rem;
+    overflow: hidden;
+    border-radius: .2rem;
+    margin: 1rem 0;
+}
+
+.comment {
+    opacity: .5;
+}
+
+.wip, .warning {
+    font-weight: bold;
+    background-color: #ffeb3b;
+    overflow: visible;
+    padding: .1em;
+    margin: 0 .1em;
+    border-radius: .2em;
+    box-shadow: 0 0 2px #9d8c00;
+}
+
+.wip {
+    color: blue !important;
+}
+
+.wip::before {
+    content: '🚧（施工中）'
+}
+
+.warning {
+    color: red !important;
+}
+
+.warning::before {
+    content: '⚠️'
+}
+
+.theorem, .proof, .algorithm, .pseudo-code {
+    display: block;
+    margin: .5em 0;
+    padding-top: 6rem;
+    margin-top: -6rem;
+}
+
+.theorem .theorem-head, .proof .proof-head {
+    font-weight: bold;
+    margin-right: .5em;
+    color: darkblue;
+}
+
+.proof .proof-qed {
+    display: block;
+    float: right;
+    border: 1px solid black;
+    width: .9em;
+    height: .9em;
+    margin : .3em;
+}
+
+.ref-theorem, .ref-algorithm {
+    display: inline-block;
+}
+
+.ref-theorem .ref-theorem-head {
+    color: darkblue;
+}
+
+.algorithm .algorithm-head, .pseudo-code .pseudo-code-head {
+    font-weight: bold;
+    margin-right: .5em;
+    color: darkgreen;
+}
+
+.ref-algorithm .ref-algorithm-head {
+    color: darkgreen;
+}
+
+figure {
+    padding-top: 6rem;
+    margin-top: -4rem;
+}
+
+img + figcaption, table + figcaption {
+    margin-top: 1em;
+}
+
+figure .figure-head {
+    font-weight: bold;
+    margin-right: .5em;
+    color: darkmagenta;
+}
+
+.ref-figure .ref-figure-head {
+    color: darkmagenta;
+}
+
+figure .table-head {
+    font-weight: bold;
+    margin-right: .5em;
+    color: darkred;
+}
+
+.ref-figure .ref-table-head {
+    color: darkred;
+}
+
+table:not(.lntable) {
+    display: table;
+    margin: 0 auto;
+    width: auto;
+}
+
+table:not(.lntable) thead {
+    border-top: 2px solid currentColor;
+}
+
+table:not(.lntable) tr:last-child {
+    border-bottom: 2px solid currentColor;
+}
+</style>
+
 <script>
-class XCard extends HTMLDivElement {
+class XCard extends HTMLElement {
     constructor() {
         super();
-        this.style.display = 'block';
-        this.style.boxShadow = '0 0.5px 3px rgba(0,0,0,0.3)';
-        this.style.padding = '.5rem 1rem';
-        this.style.overflow = 'hidden';
-        this.style.borderRadius = '.2rem';
-        this.style.margin = '1rem 0';
+        this.classList.add('card');
     }
 }
 
-class XWip extends HTMLSpanElement {
+class XWip extends HTMLElement {
     constructor() {
         super();
-        this.appendChild(document.createTextNode('（🚧施工中）'));
-        this.style.color = 'blue';
+        this.classList.add('wip');
     }
 }
 
-class XComment extends HTMLSpanElement {
+class XComment extends HTMLElement {
     constructor() {
         super();
-        this.style.opacity = '0.5';
+        this.classList.add('comment');
     }
 }
 
-class XWarning extends HTMLSpanElement {
+class XWarning extends HTMLElement {
     constructor() {
         super();
-        this.insertBefore(document.createTextNode('⚠️'), this.firstChild);
-        this.style.backgroundColor = '#ffeb3b';
-        this.style.overflow = 'visible';
-        this.style.padding = '.1em';
-        this.style.margin = '0 .1em';
-        this.style.borderRadius = '0 .1em';
-        this.style.boxShadow = '0 0 2px #9d8c00';
+        this.classList.add('warning');
     }
 }
 
 const theoremNames = [];
 const theoremIndices = {};
 
-class XTheorem extends HTMLDivElement {
+class XTheorem extends HTMLElement {
     constructor() {
         super();
-        this.style.display = 'block';
-        this.style.margin = '.5em 0';
         const index = theoremNames.length;
         const name = this.getAttribute('id') || `theorem-${index + 1}`;
         theoremNames.push(name);
         theoremIndices[name] = index;
         const head = document.createElement('a');
         head.appendChild(document.createTextNode(`定理 ${index + 1}`));
-        head.style.fontWeight = 'bold';
-        head.style.marginRight = '.5em';
-        head.style.color = 'darkblue';
         head.setAttribute('href', `#${name}`);
+        head.classList.add('theorem-head');
+        head.classList.add('anchor-head');
         this.insertBefore(head, this.firstChild);
+        this.classList.add('theorem');
     }
 }
 
-class XProof extends HTMLDivElement {
+class XProof extends HTMLElement {
     constructor() {
         super();
-        this.style.display = 'block';
-        this.style.margin = '.5em 0';
         const name = this.getAttribute('for');
+        const head = document.createElement('a');
+        head.classList.add('proof-head');
         if (name === null || theoremIndices[name] === undefined) {
-            const head = document.createElement('span');
             head.appendChild(document.createTextNode('未知证明'));
-            head.style.fontWeight = 'bold';
-            head.style.marginRight = '.5em';
-            head.style.color = 'red';
-            this.insertBefore(head, this.firstChild);
+            head.classList.add('warning');
         } else {
             const index = theoremIndices[name];
-            const head = document.createElement('a');
             head.appendChild(document.createTextNode(`证明 ${index + 1}`));
-            head.style.fontWeight = 'bold';
-            head.style.marginRight = '.5em';
-            head.style.color = 'darkblue';
             head.setAttribute('href', `#${name}`);
-            this.insertBefore(head, this.firstChild);
         }
+        this.insertBefore(head, this.firstChild);
         // QED.
         const tail = document.createElement('div');
-        tail.style.display = 'block';
-        tail.style.float = 'right';
-        tail.style.border = '1px solid black';
-        tail.style.width = '1em';
-        tail.style.height = '1em';
-        tail.style.margin = '.25em'
+        tail.classList.add('proof-qed');
         this.appendChild(tail);
+        this.classList.add('proof');
     }
 }
 
-class XRefTheorem extends HTMLDivElement {
+class XRefTheorem extends HTMLElement {
     constructor() {
         super();
-        this.style.display = 'inline-block';
-        const head = document.createElement('a');
-        head.style.fontWeight = 'bold';
         const name = this.getAttribute('ref');
+        const head = document.createElement('a');
+        head.classList.add('ref-theorem-head');
         if (name === null || theoremIndices[name] === undefined) {
             head.appendChild(document.createTextNode('未知定理'));
-            head.style.color = 'red';
+            head.classList.add('warning');
         } else {
             const index = theoremIndices[name];
             head.appendChild(document.createTextNode(`定理 ${index + 1}`));
             head.setAttribute('href', `#${name}`);
         }
         this.appendChild(head);
+        this.classList.add('ref-theorem');
     }
 }
 
 const algorithmNames = [];
 const algorithmIndices = {};
 
-class XAlgorithm extends HTMLDivElement {
+class XAlgorithm extends HTMLElement {
     constructor() {
         super();
-        this.style.display = 'block';
-        this.style.margin = '.5em 0';
         const index = algorithmNames.length;
         const name = this.getAttribute('id') || `algorithm-${index + 1}`;
         algorithmNames.push(name);
         algorithmIndices[name] = index;
         const head = document.createElement('a');
         head.appendChild(document.createTextNode(`算法 ${index + 1}`));
-        head.style.fontWeight = 'bold';
-        head.style.marginRight = '.5em';
-        head.style.color = 'darkgreen';
         head.setAttribute('href', `#${name}`);
+        head.classList.add('algorithm-head');
+        head.classList.add('anchor-head');
         this.insertBefore(head, this.firstChild);
+        this.classList.add('algorithm');
     }
 }
 
-class XPseudoCode extends HTMLDivElement {
+class XPseudoCode extends HTMLElement {
     constructor() {
         super();
-        this.style.display = 'block';
-        this.style.margin = '.5em 0';
         const name = this.getAttribute('for');
+        const head = document.createElement('a');
         if (name === null || algorithmIndices[name] === undefined) {
-            const head = document.createElement('div');
             head.appendChild(document.createTextNode('未知伪码'));
-            head.style.display = 'block';
-            head.style.fontWeight = 'bold';
-            head.style.marginRight = '.5em';
-            head.style.color = 'red';
             this.insertBefore(head, this.firstChild);
+            head.classList.add('warning');
         } else {
             const index = algorithmIndices[name];
-            const head = document.createElement('a');
             head.appendChild(document.createTextNode(`伪码 ${index + 1}`));
-            head.style.display = 'block';
-            head.style.fontWeight = 'bold';
-            head.style.marginRight = '.5em';
-            head.style.color = 'darkgreen';
             head.setAttribute('href', `#${name}`);
-            this.insertBefore(head, this.firstChild);
         }
+        head.classList.add('pseudo-code-head');
+        this.insertBefore(head, this.firstChild);
+        this.classList.add('pseudo-code');
     }
 }
 
-class XRefAlgorithm extends HTMLDivElement {
+class XRefAlgorithm extends HTMLElement {
     constructor() {
         super();
-        this.style.display = 'inline-block';
         const head = document.createElement('a');
-        head.style.fontWeight = 'bold';
         const name = this.getAttribute('ref');
+        head.classList.add('ref-algorithm-head');
         if (name === null || algorithmIndices[name] === undefined) {
             head.appendChild(document.createTextNode('未知算法'));
-            head.style.color = 'red';
+            head.classList.add('warning');
         } else {
             const index = algorithmIndices[name];
             head.appendChild(document.createTextNode(`算法 ${index + 1}`));
             head.setAttribute('href', `#${name}`);
         }
         this.appendChild(head);
+        this.classList.add('ref-algorithm');
     }
 }
 
-customElements.define('x-card', XCard, { extends: 'div' });
-customElements.define('x-wip', XWip, { extends: 'span' });
-customElements.define('x-comment', XComment, { extends: 'span' });
-customElements.define('x-warning', XWarning, { extends: 'span' });
-customElements.define('x-theorem', XTheorem, { extends: 'div' });
-customElements.define('x-proof', XProof, { extends: 'div' });
-customElements.define('x-ref-theorem', XRefTheorem, { extends: 'div' });
-customElements.define('x-algorithm', XAlgorithm, { extends: 'div' });
-customElements.define('x-pseudo-code', XPseudoCode, { extends: 'div' });
-customElements.define('x-ref-algorithm', XRefAlgorithm, { extends: 'div' });
+const figureNames = [];
+const figureIndices = {};
+
+class XFigure extends HTMLElement {
+    constructor() {
+        super();
+        const index = figureNames.length;
+        const name = this.getAttribute('id') || `figure-${index + 1}`;
+        figureNames.push(name);
+        figureIndices[name] = index;
+        const figure = document.createElement('figure');
+        const img = document.createElement('img');
+        img.setAttribute('src', this.getAttribute('src'));
+        img.setAttribute('alt', this.getAttribute('alt') || this.innerText);
+        figure.appendChild(img);
+        const figcaption = document.createElement('figcaption');
+        const head = document.createElement('a');
+        head.appendChild(document.createTextNode(`图片 ${index + 1}`));
+        head.setAttribute('href', `#${name}`);
+        head.classList.add('figure-head');
+        head.classList.add('anchor-head');
+        figcaption.appendChild(head);
+        const children = Array.from(this.childNodes);
+        children.forEach(child => {
+            child.remove();
+            figcaption.appendChild(child);
+        });
+        figure.appendChild(figcaption);
+        this.appendChild(figure);
+    }
+}
+
+class XRefFigure extends HTMLElement {
+    constructor() {
+        super();
+        const head = document.createElement('a');
+        const name = this.getAttribute('ref');
+        head.classList.add('ref-figure-head');
+        if (name === null || figureIndices[name] === undefined) {
+            head.appendChild(document.createTextNode('未知图片'));
+            head.classList.add('warning');
+        } else {
+            const index = figureIndices[name];
+            head.appendChild(document.createTextNode(`图片 ${index + 1}`));
+            head.setAttribute('href', `#${name}`);
+        }
+        this.appendChild(head);
+        this.classList.add('ref-figure');
+    }
+}
+
+const tableNames = [];
+const tableIndices = {};
+
+class XTable extends HTMLElement {
+    constructor() {
+        super();
+        const index = tableNames.length;
+        const name = this.getAttribute('id') || `table-${index + 1}`;
+        tableNames.push(name);
+        tableIndices[name] = index;
+        const figure = document.createElement('figure');
+        const figcaption = document.createElement('figcaption');
+        const head = document.createElement('a');
+        head.appendChild(document.createTextNode(`表格 ${index + 1}`));
+        head.setAttribute('href', `#${name}`);
+        head.classList.add('table-head');
+        head.classList.add('anchor-head');
+        figcaption.appendChild(head);
+        const children = Array.from(this.childNodes);
+        children.forEach(child => {
+            child.remove();
+            if (child.tagName === 'TABLE') {
+                figure.appendChild(child);
+            } else if (child.tagName === 'P') {
+                Array.from(child.childNodes).forEach(child => figcaption.appendChild(child));
+            }
+        });
+        figure.appendChild(figcaption);
+        this.appendChild(figure);
+    }
+}
+
+class XRefTable extends HTMLElement {
+    constructor() {
+        super();
+        const head = document.createElement('a');
+        const name = this.getAttribute('ref');
+        head.classList.add('ref-table-head');
+        if (name === null || tableIndices[name] === undefined) {
+            head.appendChild(document.createTextNode('未知表格'));
+            head.classList.add('warning');
+        } else {
+            const index = tableIndices[name];
+            head.appendChild(document.createTextNode(`表格 ${index + 1}`));
+            head.setAttribute('href', `#${name}`);
+        }
+        this.appendChild(head);
+        this.classList.add('ref-table');
+    }
+}
+
+customElements.define('x-card', XCard);
+customElements.define('x-wip', XWip);
+customElements.define('x-comment', XComment);
+customElements.define('x-warning', XWarning);
+customElements.define('x-theorem', XTheorem);
+customElements.define('x-proof', XProof);
+customElements.define('x-ref-theorem', XRefTheorem);
+customElements.define('x-algorithm', XAlgorithm);
+customElements.define('x-pseudo-code', XPseudoCode);
+customElements.define('x-ref-algorithm', XRefAlgorithm);
+customElements.define('x-figure', XFigure);
+customElements.define('x-ref-figure', XRefFigure);
+customElements.define('x-table', XTable);
+customElements.define('x-ref-table', XRefTable);
 </script>
