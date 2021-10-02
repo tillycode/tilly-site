@@ -22,7 +22,7 @@ contributors: [szp]
 
 ## 数据依赖的定义
 
-数据依赖是合并基本块（那些入边数目大于等于2的基本块）的入边上的，它表示的是**从该基本块的立即支配者到该基本块的无环路径成立所需要满足的所有条件**。
+数据依赖是合并基本块<x-comment>（入边数目大于等于2的基本块）</x-comment>的入边上的，它表示的是**从该基本块的立即支配者到该基本块的无环路径成立所需要满足的所有条件**。
 
 下图是一个简单的CFG，本文之后的所有示例都会基于这个图。本文中的CFG会被认为是**带入口节点、可以有重边、可以有自环的有向图**。
 
@@ -141,11 +141,11 @@ CFG上，节点$x$**支配**节点$y$，是指从入口节点到$y$的每条路�
 
 一个节点的严格支配者满足下面的式子<x-comment>（集合交的单位元是全集，因而两个式子不能合并）</x-comment>：
 
-$$\begin{cases}\mathrm{StrictDoms}(x)=\varnothing,&\text{if}~x=Entry\\\\\mathrm{StrictDoms}(x)=\bigcap_{y\in\mathrm{Pred}(x)}y\cup\mathrm{StrictDoms}(y),&\text{if}~x\neq Entry\end{cases}$$
+<x-formula id="eq:dom-rec">$$\begin{cases}\mathrm{StrictDoms}(x)=\varnothing,&\text{if}~x=Entry\\\\\mathrm{StrictDoms}(x)=\bigcap_{y\in\mathrm{Pred}(x)}y\cup\mathrm{StrictDoms}(y),&\text{if}~x\neq Entry\end{cases}$$</x-formula>
 
 #### DAG控制流图的支配算法
 
-上式似乎可以递归。对于DAG控制流图，我们发现这个定义是个**结构递归**<x-comment>（可以找到一种顺序，在求$\mathrm{StrictDoms}(x)$时，对任意$y\in\mathrm{Pred}(x)$，$\mathrm{StrictDoms}(y)$已经求出）</x-comment>，因而对于任意基本块$x$，满足上式的$\mathrm{StrictDoms}(x)$是唯一确定的，并且按照拓扑排序即可在确定的时间内完成计算。在稍后的章节中，我们将看到这个递归算法在忽略回边的情况下，同样适用于可归约图<x-wip></x-wip>。
+<x-ref-formula ref="eq:dom-rec"></x-ref-formula>似乎可以递归。对于DAG控制流图，我们发现这个定义是个**结构递归**<x-comment>（可以找到一种顺序，在求$\mathrm{StrictDoms}(x)$时，对任意$y\in\mathrm{Pred}(x)$，$\mathrm{StrictDoms}(y)$已经求出）</x-comment>，因而对于任意基本块$x$，满足上式的$\mathrm{StrictDoms}(x)$是唯一确定的，并且按照拓扑排序即可在确定的时间内完成计算。在稍后的章节中，我们将看到这个递归算法在忽略回边的情况下，同样适用于可归约图<x-wip></x-wip>。
 
 实际计算中，我们会发现如果用bit vector作为集合，其集合的交并运算非常复杂，并且没有完全利用支配的“树”的性质。注意到：
 
@@ -181,7 +181,7 @@ $$\begin{align*}
 
 未加说明的话，以下讨论是对于一般的CFG，不仅限于DAG形式的。
 
-多元素集合上的$\mathrm{LCA}(S)$可以归结为两个变量的$\mathrm{LCA}(a, b)$<x-comment>（因为$\mathrm{LCA}$有结合律）</x-comment>。单元素集合上的$\mathrm{LCA}(\\{x\\})=x$。空集上的$\mathrm{LCA}(\varnothing)$是ill-defined<x-comment>（因为$\mathrm{LCA}$无单位元）</x-comment>。当然，在所有基本块可达的情况下，如果$x\neq Entry$，则$\mathrm{Pred}(x)\neq\varnothing,\text{if}$，所以<x-warning comment="指向不明">之前的式子</x-warning>定义良好。接下来就考虑如何快速地求解两个变量的$\mathrm{LCA}(a, b)$。
+多元素集合上的$\mathrm{LCA}(S)$可以归结为两个变量的$\mathrm{LCA}(a, b)$<x-comment>（因为$\mathrm{LCA}$有结合律）</x-comment>。单元素集合上的$\mathrm{LCA}(\\{x\\})=x$。空集上的$\mathrm{LCA}(\varnothing)$是ill-defined<x-comment>（因为$\mathrm{LCA}$无单位元）</x-comment>。当然，在所有基本块可达的情况下，如果$x\neq Entry$，则$\mathrm{Pred}(x)\neq\varnothing,\text{if}$，所以<x-ref-formula ref="eq:dom-rec"></x-ref-formula>定义良好。接下来就考虑如何快速地求解两个变量的$\mathrm{LCA}(a, b)$。
 
 <x-card>
 <x-theorem id="th:dom-post-order">支配树上的祖父子孙关系，在DFST上得到了保留。精确地来说：
@@ -226,14 +226,18 @@ $$\forall y(y\in\mathrm{Descendants}\_{DomTree}(x)\rightarrow\mathrm{RevPostOrde
 </x-pseudo-code>
 </x-card>
 
-这个算法不仅简单，而且性能不错，因为能使用连续的数组提高缓存命中率。注意，分支1和分支2可能会交替执行：如<x-ref-figure ref="fig:dom-dfst-relation"></x-ref-figure>中，$N\_0,\dots,N\_4$插入到支配树后，计算$\mathrm{LCA}(\mathrm{Pred}(N\_5))$即$\mathrm{LCA}(N\_4,N\_3)$时，会：
+这个算法不仅简单，而且性能不错，因为能使用连续的数组提高缓存命中率。注意，分支1和分支2可能会交替执行，这其实是上面的“不能得到更强的定理”导致的：如<x-ref-figure ref="fig:dom-dfst-relation"></x-ref-figure>中，$N\_0,\dots,N\_4$插入到支配树后，计算$\mathrm{LCA}(\mathrm{Pred}(N\_5))$即$\mathrm{LCA}(N\_4,N\_3)$时，会：
 
 1. 找到$N\_4$的父亲$N\_1$<x-comment>（分支2）</x-comment>
 2. 找到$N\_3$的父亲$N\_0$<x-comment>（分支1）</x-comment>
 3. 找到$N\_1$的父亲$N\_0$<x-comment>（分支2）</x-comment>
 4. 得出：$\mathrm{LCA}(N\_4,N\_3) = N\_0$
 
+不过似乎实验证明
+
 #### 一般控制流图的支配算法
+
+对于一般的控制流图，<x-ref-formula ref="eq:dom-rec"></x-ref-formula>不是结构递归，甚至单单这个式子，作为方程都无法确定唯一解，下面是个例子：
 
 <!--
           First Pass  Second Pass
@@ -262,13 +266,18 @@ $$\forall y(y\in\mathrm{Descendants}\_{DomTree}(x)\rightarrow\mathrm{RevPostOrde
 4 3  1 2
 -->
 
+<!-- markdownlint-disable -->
 <style scoped>
 x-card {
     display: block;
     box-shadow: 0 0.5px 3px rgba(0,0,0,0.3);
-    padding: .5rem 1rem;
+    padding: 1rem;
     border-radius: .2rem;
     margin: 1rem 0;
+}
+
+x-card > *:last-child, x-card > * > *:last-child {
+    margin-bottom: 0;
 }
 
 x-comment {
@@ -311,7 +320,7 @@ x-theorem, x-proof, x-algorithm, x-pseudo-code {
     margin-top: -6rem;
 }
 
-x-theorem .theorem-head, x-proof .proof-head {
+x-theorem .theorem-label, x-proof .proof-label {
     font-weight: bold;
     margin-right: .5em;
     color: darkblue;
@@ -326,21 +335,21 @@ x-proof .proof-qed {
     margin : .3em;
 }
 
-x-ref-theorem, x-ref-algorithm {
+x-ref-theorem, x-ref-algorithm, x-ref-figure, x-ref-table, x-ref-formula {
     display: inline-block;
 }
 
-x-ref-theorem .ref-theorem-head {
+x-ref-theorem .ref-theorem-label {
     color: darkblue;
 }
 
-x-algorithm .algorithm-head, x-pseudo-code .pseudo-code-head {
+x-algorithm .algorithm-label, x-pseudo-code .pseudo-code-label {
     font-weight: bold;
     margin-right: .5em;
     color: darkgreen;
 }
 
-x-ref-algorithm .ref-algorithm-head {
+x-ref-algorithm .ref-algorithm-label {
     color: darkgreen;
 }
 
@@ -353,30 +362,32 @@ img + figcaption, table + figcaption {
     margin-top: 1em;
 }
 
-figure .figure-head {
+figure .figure-label {
     font-weight: bold;
     margin-right: .5em;
     color: darkmagenta;
 }
 
-x-ref-figure .ref-figure-head {
+x-ref-figure .ref-figure-label {
     color: darkmagenta;
 }
 
-figure .table-head {
+figure .table-label {
     font-weight: bold;
     margin-right: .5em;
     color: darkred;
 }
 
-x-ref-table .ref-table-head {
+x-ref-table .ref-table-label {
     color: darkred;
 }
 
 table:not(.lntable) {
-    display: table;
+    display: block;
     margin: 0 auto;
     width: auto;
+    max-width: 100%;
+    overflow-x: auto;
 }
 
 table:not(.lntable) thead {
@@ -385,6 +396,49 @@ table:not(.lntable) thead {
 
 table:not(.lntable) tr:last-child {
     border-bottom: 2px solid currentColor;
+}
+
+.katex-display {
+    overflow-x: auto;
+}
+
+.blog-content p {
+    text-align: justify;
+}
+
+x-formula {
+    display: flex;
+    align-items: center;
+    padding-top: 6rem;
+    margin-top: -6rem;
+    flex-wrap: wrap;
+}
+
+x-formula > span:first-child {
+    display: block;
+    flex-grow: 1;
+    max-width: 100%;
+}
+
+x-formula .formula-label {
+    display: block;
+    white-space: nowrap;
+    margin-left: auto;
+    color: darkcyan;
+}
+
+x-formula .formula-label::before {
+  content: "(";
+  padding-right: .1em;
+}
+
+x-formula .formula-label::after {
+  content: ")";
+  padding-left: .1em;
+}
+
+x-ref-formula .ref-formula-label {
+    color: darkcyan;
 }
 </style>
 
@@ -426,15 +480,15 @@ class XTheorem extends HTMLElement {
     constructor() {
         super();
         const index = theoremNames.length;
-        const name = this.getAttribute('id') || `theorem-${index + 1}`;
+        const name = this.getAttribute('id') || `theorem-${index + 1}`
+        this.setAttribute('id', name);
         theoremNames.push(name);
         theoremIndices[name] = index;
-        const head = document.createElement('a');
-        head.appendChild(document.createTextNode(`定理 ${index + 1}`));
-        head.setAttribute('href', `#${name}`);
-        head.classList.add('theorem-head');
-        head.classList.add('anchor-head');
-        this.insertBefore(head, this.firstChild);
+        const label = document.createElement('a');
+        label.appendChild(document.createTextNode(`定理 ${index + 1}`));
+        label.setAttribute('href', `#${name}`);
+        label.classList.add('theorem-label');
+        this.insertBefore(label, this.firstChild);
     }
 }
 
@@ -442,17 +496,17 @@ class XProof extends HTMLElement {
     constructor() {
         super();
         const name = this.getAttribute('for');
-        const head = document.createElement('a');
-        head.classList.add('proof-head');
+        const label = document.createElement('a');
+        label.classList.add('proof-label');
         if (name === null || theoremIndices[name] === undefined) {
-            head.appendChild(document.createTextNode('未知证明'));
-            head.classList.add('warning');
+            label.appendChild(document.createTextNode('未知证明'));
+            label.classList.add('warning');
         } else {
             const index = theoremIndices[name];
-            head.appendChild(document.createTextNode(`证明 ${index + 1}`));
-            head.setAttribute('href', `#${name}`);
+            label.appendChild(document.createTextNode(`证明 ${index + 1}`));
+            label.setAttribute('href', `#${name}`);
         }
-        this.insertBefore(head, this.firstChild);
+        this.insertBefore(label, this.firstChild);
         // QED.
         const tail = document.createElement('div');
         tail.classList.add('proof-qed');
@@ -464,17 +518,17 @@ class XRefTheorem extends HTMLElement {
     constructor() {
         super();
         const name = this.getAttribute('ref');
-        const head = document.createElement('a');
-        head.classList.add('ref-theorem-head');
+        const label = document.createElement('a');
+        label.classList.add('ref-theorem-label');
         if (name === null || theoremIndices[name] === undefined) {
-            head.appendChild(document.createTextNode('未知定理'));
-            head.classList.add('warning');
+            label.appendChild(document.createTextNode('未知定理'));
+            label.classList.add('warning');
         } else {
             const index = theoremIndices[name];
-            head.appendChild(document.createTextNode(`定理 ${index + 1}`));
-            head.setAttribute('href', `#${name}`);
+            label.appendChild(document.createTextNode(`定理 ${index + 1}`));
+            label.setAttribute('href', `#${name}`);
         }
-        this.appendChild(head);
+        this.appendChild(label);
         this.classList.add('ref-theorem');
     }
 }
@@ -487,14 +541,14 @@ class XAlgorithm extends HTMLElement {
         super();
         const index = algorithmNames.length;
         const name = this.getAttribute('id') || `algorithm-${index + 1}`;
+        this.setAttribute('id', name);
         algorithmNames.push(name);
         algorithmIndices[name] = index;
-        const head = document.createElement('a');
-        head.appendChild(document.createTextNode(`算法 ${index + 1}`));
-        head.setAttribute('href', `#${name}`);
-        head.classList.add('algorithm-head');
-        head.classList.add('anchor-head');
-        this.insertBefore(head, this.firstChild);
+        const label = document.createElement('a');
+        label.appendChild(document.createTextNode(`算法 ${index + 1}`));
+        label.setAttribute('href', `#${name}`);
+        label.classList.add('algorithm-label');
+        this.insertBefore(label, this.firstChild);
     }
 }
 
@@ -502,36 +556,36 @@ class XPseudoCode extends HTMLElement {
     constructor() {
         super();
         const name = this.getAttribute('for');
-        const head = document.createElement('a');
+        const label = document.createElement('a');
         if (name === null || algorithmIndices[name] === undefined) {
-            head.appendChild(document.createTextNode('未知伪码'));
-            this.insertBefore(head, this.firstChild);
-            head.classList.add('warning');
+            label.appendChild(document.createTextNode('未知伪码'));
+            this.insertBefore(label, this.firstChild);
+            label.classList.add('warning');
         } else {
             const index = algorithmIndices[name];
-            head.appendChild(document.createTextNode(`伪码 ${index + 1}`));
-            head.setAttribute('href', `#${name}`);
+            label.appendChild(document.createTextNode(`伪码 ${index + 1}`));
+            label.setAttribute('href', `#${name}`);
         }
-        head.classList.add('pseudo-code-head');
-        this.insertBefore(head, this.firstChild);
+        label.classList.add('pseudo-code-label');
+        this.insertBefore(label, this.firstChild);
     }
 }
 
 class XRefAlgorithm extends HTMLElement {
     constructor() {
         super();
-        const head = document.createElement('a');
+        const label = document.createElement('a');
         const name = this.getAttribute('ref');
-        head.classList.add('ref-algorithm-head');
+        label.classList.add('ref-algorithm-label');
         if (name === null || algorithmIndices[name] === undefined) {
-            head.appendChild(document.createTextNode('未知算法'));
-            head.classList.add('warning');
+            label.appendChild(document.createTextNode('未知算法'));
+            label.classList.add('warning');
         } else {
             const index = algorithmIndices[name];
-            head.appendChild(document.createTextNode(`算法 ${index + 1}`));
-            head.setAttribute('href', `#${name}`);
+            label.appendChild(document.createTextNode(`算法 ${index + 1}`));
+            label.setAttribute('href', `#${name}`);
         }
-        this.appendChild(head);
+        this.appendChild(label);
         this.classList.add('ref-algorithm');
     }
 }
@@ -544,6 +598,7 @@ class XFigure extends HTMLElement {
         super();
         const index = figureNames.length;
         const name = this.getAttribute('id') || `figure-${index + 1}`;
+        this.setAttribute('id', name);
         figureNames.push(name);
         figureIndices[name] = index;
         const figure = document.createElement('figure');
@@ -552,12 +607,11 @@ class XFigure extends HTMLElement {
         img.setAttribute('alt', this.getAttribute('alt') || this.innerText);
         figure.appendChild(img);
         const figcaption = document.createElement('figcaption');
-        const head = document.createElement('a');
-        head.appendChild(document.createTextNode(`图片 ${index + 1}`));
-        head.setAttribute('href', `#${name}`);
-        head.classList.add('figure-head');
-        head.classList.add('anchor-head');
-        figcaption.appendChild(head);
+        const label = document.createElement('a');
+        label.appendChild(document.createTextNode(`图片 ${index + 1}`));
+        label.setAttribute('href', `#${name}`);
+        label.classList.add('figure-label');
+        figcaption.appendChild(label);
         const children = Array.from(this.childNodes);
         children.forEach(child => {
             child.remove();
@@ -571,18 +625,18 @@ class XFigure extends HTMLElement {
 class XRefFigure extends HTMLElement {
     constructor() {
         super();
-        const head = document.createElement('a');
+        const label = document.createElement('a');
         const name = this.getAttribute('ref');
-        head.classList.add('ref-figure-head');
+        label.classList.add('ref-figure-label');
         if (name === null || figureIndices[name] === undefined) {
-            head.appendChild(document.createTextNode('未知图片'));
-            head.classList.add('warning');
+            label.appendChild(document.createTextNode('未知图片'));
+            label.classList.add('warning');
         } else {
             const index = figureIndices[name];
-            head.appendChild(document.createTextNode(`图片 ${index + 1}`));
-            head.setAttribute('href', `#${name}`);
+            label.appendChild(document.createTextNode(`图片 ${index + 1}`));
+            label.setAttribute('href', `#${name}`);
         }
-        this.appendChild(head);
+        this.appendChild(label);
     }
 }
 
@@ -594,16 +648,16 @@ class XTable extends HTMLElement {
         super();
         const index = tableNames.length;
         const name = this.getAttribute('id') || `table-${index + 1}`;
+        this.setAttribute('id', name);
         tableNames.push(name);
         tableIndices[name] = index;
         const figure = document.createElement('figure');
         const figcaption = document.createElement('figcaption');
-        const head = document.createElement('a');
-        head.appendChild(document.createTextNode(`表格 ${index + 1}`));
-        head.setAttribute('href', `#${name}`);
-        head.classList.add('table-head');
-        head.classList.add('anchor-head');
-        figcaption.appendChild(head);
+        const label = document.createElement('a');
+        label.appendChild(document.createTextNode(`表格 ${index + 1}`));
+        label.setAttribute('href', `#${name}`);
+        label.classList.add('table-label');
+        figcaption.appendChild(label);
         const children = Array.from(this.childNodes);
         children.forEach(child => {
             child.remove();
@@ -621,18 +675,56 @@ class XTable extends HTMLElement {
 class XRefTable extends HTMLElement {
     constructor() {
         super();
-        const head = document.createElement('a');
+        const label = document.createElement('a');
         const name = this.getAttribute('ref');
-        head.classList.add('ref-table-head');
+        label.classList.add('ref-table-label');
         if (name === null || tableIndices[name] === undefined) {
-            head.appendChild(document.createTextNode('未知表格'));
-            head.classList.add('warning');
+            label.appendChild(document.createTextNode('未知表格'));
+            label.classList.add('warning');
         } else {
             const index = tableIndices[name];
-            head.appendChild(document.createTextNode(`表格 ${index + 1}`));
-            head.setAttribute('href', `#${name}`);
+            label.appendChild(document.createTextNode(`表格 ${index + 1}`));
+            label.setAttribute('href', `#${name}`);
         }
-        this.appendChild(head);
+        this.appendChild(label);
+    }
+}
+
+const formulaNames = [];
+const formulaIndices = {};
+
+class XFormula extends HTMLElement {
+    constructor() {
+        super();
+        const index = formulaNames.length;
+        const name = this.getAttribute('id') || `formula-${index + 1}`;
+        this.setAttribute('id', name);
+        formulaNames.push(name);
+        formulaIndices[name] = index;
+        const label = document.createElement('a');
+        label.appendChild(document.createTextNode(`${index + 1}`));
+        label.setAttribute('href', `#${name}`);
+        label.classList.add('formula-label');
+        this.appendChild(label);
+    }
+}
+
+class XRefFormula extends HTMLElement {
+    constructor() {
+        super();
+        const name = this.getAttribute('ref');
+        const label = document.createElement('a');
+        label.classList.add('ref-formula-label');
+        if (name === null || formulaIndices[name] === undefined) {
+            label.appendChild(document.createTextNode('未知公式'));
+            label.classList.add('warning');
+        } else {
+            const index = formulaIndices[name];
+            label.appendChild(document.createTextNode(`公式 ${index + 1}`));
+            label.setAttribute('href', `#${name}`);
+        }
+        this.appendChild(label);
+        this.classList.add('ref-formula');
     }
 }
 
@@ -650,4 +742,6 @@ customElements.define('x-figure', XFigure);
 customElements.define('x-ref-figure', XRefFigure);
 customElements.define('x-table', XTable);
 customElements.define('x-ref-table', XRefTable);
+customElements.define('x-formula', XFormula);
+customElements.define('x-ref-formula', XRefFormula);
 </script>
