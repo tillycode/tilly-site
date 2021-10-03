@@ -24,7 +24,7 @@ contributors: [szp]
 
 数据依赖是合并基本块<x-comment>（入边数目大于等于2的基本块）</x-comment>的入边上的，它表示的是**从该基本块的立即支配者到该基本块的无环路径成立所需要满足的所有条件**。
 
-下图是一个简单的CFG，本文之后的所有示例都会基于这个图。本文中的CFG会被认为是**带入口节点、可以有重边、可以有自环的有向图**。
+下图是一个简单的CFG，本文之后的所有示例都会基于这个图。本文中的CFG会被认为是**带入口节点、可以有重边、可以有自环的有向图**。此外满足**可达性**：存在从入口节点到任意节点的路径。
 
 <x-figure src="./example-cfg.svg" id="fig:example-cfg">示例CFG</x-figure>
 
@@ -237,7 +237,36 @@ $$\forall y(y\in\mathrm{Descendants}\_{DomTree}(x)\rightarrow\mathrm{RevPostOrde
 
 #### 一般控制流图的支配算法
 
-对于一般的控制流图，<x-ref-formula ref="eq:dom-rec"></x-ref-formula>不是结构递归，甚至单单这个式子，作为方程都无法确定唯一解，下面是个例子：
+对于一般的控制流图，<x-ref-formula ref="eq:dom-rec"></x-ref-formula>不是结构递归，甚至单单这个式子，作为方程都无法确定唯一解，下面是个最小的例子：
+
+<x-figure src="./non-dag-dom.svg" id="fig:non-dag-dom">一般控制流图<x-ref-formula ref="eq:dom-rec"></x-ref-formula>无唯一解示例</x-figure>
+
+<x-ref-figure ref="fig:non-dag-dom"></x-ref-figure>中的例子提醒我们，如果采用迭代算法，算法的最终不动点和初值有关，且某些不动点是错误的解<x-comment>（不完整的解）</x-comment>。那么什么解是正确的呢？其实观察上面的两个解，你就可以猜到是那个偏序关系最丰富，树最高的那个解。这里给出其形式化描述以及证明。
+
+<x-card>
+<x-theorem id="th:dom-solution-max">对一般的CFG，求解下面的式子：
+
+$$\begin{cases}\mathrm{X}(x)=\varnothing,&\text{if}~x=Entry\\\\\mathrm{X}(x)=\bigcap_{y\in\mathrm{Pred}(x)}y\cup\mathrm{X}(y),&\text{if}~x\neq Entry\end{cases}$$
+
+会得到若干解，那么对于任意基本块$x$，每个解一定满足：
+
+$$\mathrm{X}(x)\subseteq\mathrm{StrictDoms}(x)$$
+
+</x-theorem>
+<x-proof for="th:dom-solution-max"><x-comment>注意：证明非结构递归时，不能采用数学归纳法，因为那很可能是循环论证。</x-comment>反证法，假设存在$y$，满足$y\in\mathrm{X}(x)\land y\neq\mathrm{StrictDoms}(x)$。由于$y\neq\mathrm{StrictDoms}(x)$，存在路径$Entry=w\\_0\rightarrow w\\_1\rightarrow\cdots\rightarrow w\\_k=x$，且除终点外路径不经过$y$，即$y\notin\{w\\_i\mid 0\leq i\leq k-1\}$。通过有限次<x-comment>（强调！）</x-comment>的交换律和结合律，可以得到下面的式子：
+
+$$\mathrm{X}(x)=(w\_{k-1}\cup((w\_{k-2}\cup((\cdots)\cap\cdots))\cap\cdots$$
+
+因此，我们可以得到：
+
+$$\mathrm{X}(x)\subseteq\\{w\_i\mid 0\leq i\leq k-1\\}$$
+
+故$y\notin\mathrm{X}(x)$，与假设矛盾。
+
+</x-proof>
+</x-card>
+
+因此我们可以给出一个迭代算法的思路。先用一个**偏大的集合**初始化所有$\mathrm{StrictDoms}$。而后不断迭代，不断缩小$\mathrm{StrictDoms}$，剔除其中肯定错误的元素。那么，这个**偏大的集合**可以是什么呢？所有CFG节点自然是一个很粗暴且正确的想法。不过你的大脑如果还在运作的话，可能会回想起<x-ref-theorem ref="th:dom-post-order"></x-ref-theorem>。是的，支配树的偏序关系是DFST的子集，用DFST作为初始的支配树是完全可行的。
 
 <!--
           First Pass  Second Pass
@@ -284,7 +313,7 @@ x-comment {
     opacity: .5;
 }
 
-x-wip, x-warning {
+x-wip, .warning {
     background-color: #ffeb3b;
     overflow: visible;
     padding: .1em;
@@ -293,7 +322,7 @@ x-wip, x-warning {
     box-shadow: 0 0 2px #9d8c00;
 }
 
-x-warning sup {
+.warning sup {
     opacity: .5;
 }
 
@@ -305,11 +334,11 @@ x-wip::before {
     content: '🚧（施工中）'
 }
 
-x-warning {
+.warning, .warning {
     color: red !important;
 }
 
-x-warning::before {
+.warning::before {
     content: '⚠️'
 }
 
@@ -328,11 +357,10 @@ x-theorem .theorem-label, x-proof .proof-label {
 
 x-proof .proof-qed {
     display: block;
-    float: right;
     border: 1px solid black;
     width: .9em;
     height: .9em;
-    margin : .3em;
+    margin : .3em .3em .3em auto;
 }
 
 x-ref-theorem, x-ref-algorithm, x-ref-figure, x-ref-table, x-ref-formula {
@@ -464,6 +492,7 @@ class XComment extends HTMLElement {
 class XWarning extends HTMLElement {
     constructor() {
         super();
+        this.classList.add('warning');
         const comment = this.getAttribute('comment');
         if (comment) {
             const sup = document.createElement('sup');
