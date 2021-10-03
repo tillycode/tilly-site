@@ -2,19 +2,19 @@ article.blog-content,
 main.docs-content {
   counter-reset: figure-counter h2-counter h3-counter h4-counter equation;
 
-  h2::before {
+  h2:not(.no-counter)::before {
     counter-increment: h2-counter;
     counter-set: h3-counter h4-counter;
     content: counter(h2-counter) " ";
   }
 
-  h3::before {
+  h3:not(.no-counter)::before {
     counter-increment: h3-counter;
     counter-set: h4-counter;
     content: counter(h2-counter) "." counter(h3-counter) " ";
   }
 
-  h4::before {
+  h4:not(.no-counter)::before {
     counter-increment: h4-counter;
     content: counter(h2-counter) "." counter(h3-counter) "." counter(h4-counter) " ";
   }
@@ -25,7 +25,7 @@ main.docs-content {
     align-items: center;
   }
 
-  & > figure {
+  & > figure:not(.no-counter) {
     counter-increment: figure-counter;
     counter-set: subfigure-counter;
 
@@ -35,7 +35,7 @@ main.docs-content {
     }
   }
 
-  figure figure > figcaption::before {
+  figure:not(.no-counter) figure:not(.no-counter) > figcaption::before {
     counter-increment: subfigure-counter;
     content: "图 " counter(figure-counter) " (" counter(subfigure-counter, lower-alpha) ")：";
     font-weight: bold;
